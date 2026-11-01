@@ -7,8 +7,6 @@
     <title>Le jeu du chat 🐱</title>
 
     <link rel="stylesheet" href="style.css">
-
-    <!-- Style de la carte -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 
@@ -21,11 +19,12 @@
 
     <main>
         <h2>Carte de l'Europe 🗺️</h2>
-        <p>Prépare-toi à jouer partout en Europe !</p>
+        <p>Ton personnage te suit en direct !</p>
 
         <div id="map"></div>
 
-        <button onclick="localiserJoueur()">📍 Ma position</button>
+        <button onclick="demarrerGPS()">📍 Activer mon GPS</button>
+        <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
 
         <button onclick="alert('La création de partie arrive bientôt !')">
             Créer une partie
@@ -36,21 +35,17 @@
         </button>
     </main>
 
-    <!-- Bibliothèque de la carte -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // Création de la carte centrée sur l'Europe
+        // Création de la carte
         const carte = L.map('map').setView([48.5, 10], 4);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(carte);
 
-        // Marqueur du joueur
-        let marqueurJoueur = null;
-
-        // Icône du personnage humain
+        // Personnage humain
         const iconePersonnage = L.divIcon({
             className: "personnage",
             html: "🧍",
@@ -58,29 +53,35 @@
             iconAnchor: [17, 17]
         });
 
-        // Récupération de la position GPS
-        function localiserJoueur() {
+        let marqueurJoueur = null;
+        let suiviGPS = null;
+
+        // Démarrer le GPS en continu
+        function demarrerGPS() {
 
             if (!navigator.geolocation) {
                 alert("Ton navigateur ne permet pas la géolocalisation.");
                 return;
             }
 
-            navigator.geolocation.getCurrentPosition(
+            if (suiviGPS !== null) {
+                return;
+            }
+
+            suiviGPS = navigator.geolocation.watchPosition(
 
                 function(position) {
 
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
 
-                    // Déplacement de la carte vers le joueur
-                    carte.setView([latitude, longitude], 15);
+                    const nouvellePosition = [latitude, longitude];
 
-                    // Création ou déplacement du personnage
+                    // Créer le personnage ou déplacer le personnage existant
                     if (marqueurJoueur === null) {
 
                         marqueurJoueur = L.marker(
-                            [latitude, longitude],
+                            nouvellePosition,
                             { icon: iconePersonnage }
                         )
                         .addTo(carte)
@@ -89,15 +90,36 @@
 
                     } else {
 
-                        marqueurJoueur.setLatLng([latitude, longitude]);
+                        marqueurJoueur.setLatLng(nouvellePosition);
 
                     }
+
+                    // Garder le personnage au centre de la carte
+                    carte.setView(nouvellePosition, 16);
+
                 },
 
-                function() {
-                    alert("Impossible de récupérer ta position. Vérifie les autorisations GPS.");
+                function(erreur) {
+                    alert("Erreur GPS : " + erreur.message);
+                    arreterGPS();
+                },
+
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 1000,
+                    timeout: 15000
                 }
             );
+        }
+
+        // Arrêter le GPS
+        function arreterGPS() {
+
+            if (suiviGPS !== null) {
+                navigator.geolocation.clearWatch(suiviGPS);
+                suiviGPS = null;
+                alert("Le GPS est arrêté.");
+            }
         }
 
         console.log("🐱 Le jeu du chat est chargé !");
@@ -105,4 +127,3 @@
 
 </body>
 </html>
-
