@@ -5,8 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Le jeu du chat 🐱</title>
+
     <link rel="stylesheet" href="style.css">
+
+    <!-- Carte OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
+
 <body>
 
     <header>
@@ -15,13 +20,50 @@
     </header>
 
     <main>
-        <h2>Bienvenue dans le jeu !</h2>
-        <p>Prêt à jouer sur toute l'Europe ?</p>
+        <h2>Carte de l'Europe 🗺️</h2>
+        <p>Prépare-toi à jouer partout en Europe !</p>
 
-        <button>Créer une partie</button>
-        <button>Rejoindre une partie</button>
+        <div id="map"></div>
+
+        <button onclick="localiserJoueur()">📍 Ma position</button>
+        <button onclick="alert('La création de partie arrive bientôt !')">Créer une partie</button>
+        <button onclick="alert('Le système pour rejoindre une partie arrive bientôt !')">Rejoindre une partie</button>
     </main>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        const carte = L.map('map').setView([48.5, 10], 4);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(carte);
+
+        function localiserJoueur() {
+            if (!navigator.geolocation) {
+                alert("Ton navigateur ne permet pas la géolocalisation.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    carte.setView([latitude, longitude], 15);
+
+                    L.marker([latitude, longitude])
+                        .addTo(carte)
+                        .bindPopup("🐱 Tu es ici !")
+                        .openPopup();
+                },
+                function() {
+                    alert("Impossible de récupérer ta position. Vérifie les autorisations GPS.");
+                }
+            );
+        }
+    </script>
+
 </body>
 </html>
