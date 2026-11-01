@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- Carte OpenStreetMap -->
+    <!-- Style de la carte -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 
@@ -26,44 +26,83 @@
         <div id="map"></div>
 
         <button onclick="localiserJoueur()">📍 Ma position</button>
-        <button onclick="alert('La création de partie arrive bientôt !')">Créer une partie</button>
-        <button onclick="alert('Le système pour rejoindre une partie arrive bientôt !')">Rejoindre une partie</button>
+
+        <button onclick="alert('La création de partie arrive bientôt !')">
+            Créer une partie
+        </button>
+
+        <button onclick="alert('Le système pour rejoindre une partie arrive bientôt !')">
+            Rejoindre une partie
+        </button>
     </main>
 
+    <!-- Bibliothèque de la carte -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
 
     <script>
+        // Création de la carte centrée sur l'Europe
         const carte = L.map('map').setView([48.5, 10], 4);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(carte);
 
+        // Marqueur du joueur
+        let marqueurJoueur = null;
+
+        // Icône du personnage humain
+        const iconePersonnage = L.divIcon({
+            className: "personnage",
+            html: "🧍",
+            iconSize: [35, 35],
+            iconAnchor: [17, 17]
+        });
+
+        // Récupération de la position GPS
         function localiserJoueur() {
+
             if (!navigator.geolocation) {
                 alert("Ton navigateur ne permet pas la géolocalisation.");
                 return;
             }
 
             navigator.geolocation.getCurrentPosition(
+
                 function(position) {
+
                     const latitude = position.coords.latitude;
                     const longitude = position.coords.longitude;
 
+                    // Déplacement de la carte vers le joueur
                     carte.setView([latitude, longitude], 15);
 
-                    L.marker([latitude, longitude])
+                    // Création ou déplacement du personnage
+                    if (marqueurJoueur === null) {
+
+                        marqueurJoueur = L.marker(
+                            [latitude, longitude],
+                            { icon: iconePersonnage }
+                        )
                         .addTo(carte)
-                        .bindPopup("🐱 Tu es ici !")
+                        .bindPopup("👤 Tu es ici !")
                         .openPopup();
+
+                    } else {
+
+                        marqueurJoueur.setLatLng([latitude, longitude]);
+
+                    }
                 },
+
                 function() {
                     alert("Impossible de récupérer ta position. Vérifie les autorisations GPS.");
                 }
             );
         }
+
+        console.log("🐱 Le jeu du chat est chargé !");
     </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 </body>
 </html>
+
