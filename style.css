@@ -15,34 +15,43 @@ body {
 header {
     background: #237a3b;
     color: white;
-    padding: 35px 15px;
+    padding: 30px 15px;
 }
 
 header h1 {
-    font-size: 38px;
+    font-size: 36px;
     margin-bottom: 10px;
 }
 
 main {
-    margin: 70px auto;
-    padding: 30px;
+    padding: 25px 15px;
 }
 
 main h2 {
-    font-size: 30px;
-    margin-bottom: 15px;
+    font-size: 28px;
+    margin-bottom: 12px;
 }
 
 main p {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+}
+
+#map {
+    width: 100%;
+    max-width: 1100px;
+    height: 550px;
+    margin: 20px auto;
+    border: 3px solid #237a3b;
+    border-radius: 12px;
+    z-index: 1;
 }
 
 button {
     background: #269447;
     color: white;
     border: none;
-    padding: 16px 25px;
-    margin: 10px;
+    padding: 15px 22px;
+    margin: 8px;
     border-radius: 12px;
     font-size: 17px;
     cursor: pointer;
@@ -50,6 +59,4 @@ button {
 
 button:hover {
     background: #17652e;
-    transform: scale(1.04);
 }
-
