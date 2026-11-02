@@ -3,127 +3,459 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Le jeu du chat 🐱</title>
 
-    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #e9f5e5;
+            color: #24452c;
+            text-align: center;
+        }
+
+        header {
+            background: #237a3b;
+            color: white;
+            padding: 20px 10px;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+        }
+
+        main {
+            padding: 15px;
+        }
+
+        #map {
+            width: 100%;
+            max-width: 1100px;
+            height: 60vh;
+            min-height: 350px;
+            margin: 15px auto;
+            border: 3px solid #237a3b;
+            border-radius: 12px;
+            z-index: 1;
+        }
+
+        button {
+            background: #269447;
+            color: white;
+            border: none;
+            padding: 14px 18px;
+            margin: 6px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #17652e;
+        }
+
+        #infos {
+            background: white;
+            border-radius: 10px;
+            padding: 12px;
+            max-width: 600px;
+            margin: 12px auto;
+            overflow-wrap: anywhere;
+        }
+
+        .player-marker {
+            background: transparent;
+            border: none;
+        }
+
+        .player {
+            width: 44px;
+            height: 44px;
+            position: relative;
+        }
+
+        .player-circle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #3188ff;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 7px #555;
+        }
+
+        .player-direction {
+            position: absolute;
+            top: -5px;
+            left: 16px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 13px solid #164b9b;
+            transform-origin: 6px 27px;
+            z-index: 3;
+        }
+
+        .player-head {
+            position: absolute;
+            top: 8px;
+            left: 15px;
+            width: 14px;
+            height: 14px;
+            background: #ffd3a3;
+            border: 2px solid white;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .player-body {
+            position: absolute;
+            top: 22px;
+            left: 12px;
+            width: 20px;
+            height: 13px;
+            background: white;
+            border-radius: 8px 8px 5px 5px;
+            border: 1px solid #164b9b;
+            z-index: 2;
+        }
+
+        .mouse-marker {
+            background: transparent;
+            border: none;
+            font-size: 30px;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 25px;
+            }
+
+            button {
+                width: 90%;
+                max-width: 350px;
+            }
+
+            #map {
+                height: 55vh;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <header>
-        <h1>🐱 Le jeu du chat</h1>
-        <p>Le chat chasse, les souris s'échappent !</p>
-    </header>
+<header>
+    <h1>🐱 Le jeu du chat</h1>
+    <p>Le chat chasse, les souris s'échappent !</p>
+</header>
 
-    <main>
-        <h2>Carte de l'Europe 🗺️</h2>
-        <p>Ton personnage te suit en direct !</p>
+<main>
+    <h2>🗺️ Carte de l'Europe</h2>
+    <p>Crée une partie ou rejoins tes amis !</p>
 
-        <div id="map"></div>
+    <div id="infos">
+        <strong id="statut">Connexion en cours...</strong>
+        <p id="codePartie"></p>
+    </div>
 
-        <button onclick="demarrerGPS()">📍 Activer mon GPS</button>
-        <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
+    <div id="map"></div>
 
-        <button onclick="alert('La création de partie arrive bientôt !')">
-            Créer une partie
-        </button>
+    <button onclick="creerPartie()">🐱 Créer une partie</button>
+    <button onclick="rejoindrePartie()">🐭 Rejoindre une partie</button>
+    <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
+</main>
 
-        <button onclick="alert('Le système pour rejoindre une partie arrive bientôt !')">
-            Rejoindre une partie
-        </button>
-    </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script>
-        // Création de la carte
-        const carte = L.map('map').setView([48.5, 10], 4);
+<script>
+    // CONNEXION SUPABASE
+    const clientSupabase = window.supabase.createClient(
+        "https://bqklelwzakgmgyucyfwu.supabase.co",
+        "sb_publishable_3uZtK6GSvckzuDfP_bwOjQ_qDxaDV0o"
+    );
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(carte);
+    // VARIABLES DU JEU
+    let codeActuel = null;
+    let roleActuel = null;
+    let suiviGPS = null;
+    let marqueurJoueur = null;
+    let marqueursSouris = {};
+    let actualisation = null;
 
-        // Personnage humain
-        const iconePersonnage = L.divIcon({
-            className: "personnage",
-            html: "🧍",
-            iconSize: [35, 35],
-            iconAnchor: [17, 17]
+    // CARTE
+    const carte = L.map("map").setView([48.5, 10], 4);
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            attribution: "&copy; OpenStreetMap"
+        }
+    ).addTo(carte);
+
+    // AFFICHAGE DU STATUT
+    function afficherStatut(message) {
+        document.getElementById("statut").textContent = message;
+    }
+
+    // CONNEXION ANONYME
+    async function connecterJoueur() {
+        const { data: sessionData } =
+            await clientSupabase.auth.getSession();
+
+        if (sessionData.session) {
+            return true;
+        }
+
+        const { error } =
+            await clientSupabase.auth.signInAnonymously();
+
+        if (error) {
+            throw error;
+        }
+
+        return true;
+    }
+
+    // PERSONNAGE DU JOUEUR
+    function creerPersonnage(direction) {
+        return L.divIcon({
+            className: "player-marker",
+            html: `
+                <div class="player">
+                    <div class="player-circle"></div>
+                    <div class="player-direction"
+                         style="transform: rotate(${direction}deg)">
+                    </div>
+                    <div class="player-head"></div>
+                    <div class="player-body"></div>
+                </div>
+            `,
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
         });
+    }
 
-        let marqueurJoueur = null;
-        let suiviGPS = null;
+    // CREER UNE PARTIE
+    async function creerPartie() {
+        try {
+            await connecterJoueur();
 
-        // Démarrer le GPS en continu
-        function demarrerGPS() {
+            const pseudo = prompt("Quel est ton pseudo ?");
 
-            if (!navigator.geolocation) {
-                alert("Ton navigateur ne permet pas la géolocalisation.");
-                return;
-            }
+            if (!pseudo || !pseudo.trim()) return;
 
-            if (suiviGPS !== null) {
-                return;
-            }
+            afficherStatut("Création de la partie...");
 
-            suiviGPS = navigator.geolocation.watchPosition(
+            const { data, error } =
+                await clientSupabase.rpc("create_game", {
+                    p_display_name: pseudo.trim()
+                });
 
-                function(position) {
+            if (error) throw error;
 
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
+            const partie = data[0];
 
-                    const nouvellePosition = [latitude, longitude];
+            codeActuel = partie.room_code;
+            roleActuel = partie.player_role;
 
-                    // Créer le personnage ou déplacer le personnage existant
-                    if (marqueurJoueur === null) {
+            document.getElementById("codePartie").textContent =
+                "Code de ta partie : " + codeActuel;
 
-                        marqueurJoueur = L.marker(
-                            nouvellePosition,
-                            { icon: iconePersonnage }
-                        )
-                        .addTo(carte)
-                        .bindPopup("👤 Tu es ici !")
-                        .openPopup();
+            afficherStatut("🐱 Tu es le CHAT !");
 
-                    } else {
+            demarrerGPS();
 
-                        marqueurJoueur.setLatLng(nouvellePosition);
+        } catch (error) {
+            console.error(error);
+            afficherStatut("Erreur : " + error.message);
+            alert("Impossible de créer la partie : " + error.message);
+        }
+    }
 
-                    }
+    // REJOINDRE UNE PARTIE
+    async function rejoindrePartie() {
+        try {
+            await connecterJoueur();
 
-                    // Garder le personnage au centre de la carte
-                    carte.setView(nouvellePosition, 16);
+            const pseudo = prompt("Quel est ton pseudo ?");
+            if (!pseudo || !pseudo.trim()) return;
 
-                },
+            const code = prompt("Entre le code de la partie :");
+            if (!code || !code.trim()) return;
 
-                function(erreur) {
-                    alert("Erreur GPS : " + erreur.message);
-                    arreterGPS();
-                },
+            afficherStatut("Connexion à la partie...");
 
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 1000,
-                    timeout: 15000
+            const { data, error } =
+                await clientSupabase.rpc("join_game", {
+                    p_code: code.trim(),
+                    p_display_name: pseudo.trim()
+                });
+
+            if (error) throw error;
+
+            const partie = data[0];
+
+            codeActuel = partie.room_code;
+            roleActuel = partie.player_role;
+
+            document.getElementById("codePartie").textContent =
+                "Partie : " + codeActuel;
+
+            afficherStatut("🐭 Tu es une SOURIS !");
+
+            demarrerGPS();
+
+        } catch (error) {
+            console.error(error);
+            afficherStatut("Erreur : " + error.message);
+            alert("Impossible de rejoindre : " + error.message);
+        }
+    }
+
+    // DEMARRER LE GPS
+    function demarrerGPS() {
+        if (!navigator.geolocation) {
+            alert("Ton navigateur ne permet pas le GPS.");
+            return;
+        }
+
+        if (suiviGPS !== null) return;
+
+        suiviGPS = navigator.geolocation.watchPosition(
+            async function(position) {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                const direction = position.coords.heading ?? 0;
+
+                const positionGPS = [latitude, longitude];
+
+                if (marqueurJoueur === null) {
+                    marqueurJoueur = L.marker(
+                        positionGPS,
+                        { icon: creerPersonnage(direction) }
+                    ).addTo(carte);
+                } else {
+                    marqueurJoueur.setLatLng(positionGPS);
+                    marqueurJoueur.setIcon(creerPersonnage(direction));
                 }
+
+                carte.setView(positionGPS, 16);
+
+                // Envoyer sa position au serveur
+                if (codeActuel) {
+                    const { error } =
+                        await clientSupabase.rpc("update_my_position", {
+                            p_code: codeActuel,
+                            p_lat: latitude,
+                            p_lng: longitude,
+                            p_heading: direction
+                        });
+
+                    if (error) {
+                        console.error("Erreur position :", error);
+                    }
+                }
+            },
+            function(error) {
+                alert("Erreur GPS : " + error.message);
+                arreterGPS();
+            },
+            {
+                enableHighAccuracy: true,
+                maximumAge: 2000,
+                timeout: 15000
+            }
+        );
+
+        // Le chat actualise les positions des souris
+        if (roleActuel === "cat") {
+            actualisation = setInterval(
+                actualiserSouris,
+                3000
             );
         }
+    }
 
-        // Arrêter le GPS
-        function arreterGPS() {
+    // LE CHAT CONSULTE LES POSITIONS DES SOURIS
+    async function actualiserSouris() {
+        if (!codeActuel || roleActuel !== "cat") return;
 
-            if (suiviGPS !== null) {
-                navigator.geolocation.clearWatch(suiviGPS);
-                suiviGPS = null;
-                alert("Le GPS est arrêté.");
-            }
+        const { data, error } =
+            await clientSupabase.rpc("get_visible_positions", {
+                p_code: codeActuel
+            });
+
+        if (error) {
+            console.error("Erreur positions :", error);
+            return;
         }
 
-        console.log("🐱 Le jeu du chat est chargé !");
-    </script>
+        const sourisVisibles = new Set();
+
+        data.forEach(function(souris, index) {
+            const identifiant = souris.display_name + "_" + index;
+            sourisVisibles.add(identifiant);
+
+            const position = [
+                souris.latitude,
+                souris.longitude
+            ];
+
+            if (!marqueursSouris[identifiant]) {
+                marqueursSouris[identifiant] = L.marker(
+                    position,
+                    {
+                        icon: L.divIcon({
+                            className: "mouse-marker",
+                            html: "🐭",
+                            iconSize: [35, 35],
+                            iconAnchor: [17, 17]
+                        })
+                    }
+                )
+                .addTo(carte)
+                .bindPopup(souris.display_name);
+            } else {
+                marqueursSouris[identifiant].setLatLng(position);
+            }
+        });
+
+        // Retirer les souris qui ne sont plus présentes
+        Object.keys(marqueursSouris).forEach(function(id) {
+            if (!sourisVisibles.has(id)) {
+                carte.removeLayer(marqueursSouris[id]);
+                delete marqueursSouris[id];
+            }
+        });
+    }
+
+    // ARRETER LE GPS
+    function arreterGPS() {
+        if (suiviGPS !== null) {
+            navigator.geolocation.clearWatch(suiviGPS);
+            suiviGPS = null;
+        }
+
+        if (actualisation !== null) {
+            clearInterval(actualisation);
+            actualisation = null;
+        }
+
+        afficherStatut("GPS arrêté.");
+    }
+
+    console.log("🐱 Le jeu du chat est chargé !");
+</script>
 
 </body>
 </html>
