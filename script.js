@@ -1,4 +1,8 @@
 
+// ============================================
+// 🐱 LE JEU DU CHAT
+// ============================================
+
 // CONNEXION SUPABASE
 const clientSupabase = window.supabase.createClient(
     "https://bqklelwzakgmgyucyfwu.supabase.co",
@@ -14,6 +18,7 @@ let identifiantJoueur = null;
 let suiviGPS = null;
 let marqueurJoueur = null;
 let marqueursSouris = {};
+
 let actualisation = null;
 let actualisationRole = null;
 let actualisationDemande = null;
@@ -22,7 +27,9 @@ let latitudeActuelle = null;
 let longitudeActuelle = null;
 
 let demandeEnCours = null;
+let demandeAfficheeId = null;
 let traitementDemande = false;
+let sourisProcheId = null;
 
 const CLE_PARTIE = "jeuDuChat_partie";
 const DISTANCE_CAPTURE = 8;
@@ -32,8 +39,15 @@ const carte = L.map("map").setView([48.5, 10], 4);
 
 L.tileLayer(
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    { attribution: "&copy; OpenStreetMap" }
+    {
+        attribution: "&copy; OpenStreetMap"
+    }
 ).addTo(carte);
+
+
+// ============================================
+// AFFICHAGE
+// ============================================
 
 function afficherStatut(message) {
     document.getElementById("statut").textContent = message;
@@ -44,7 +58,6 @@ function afficherCode() {
         "Code de ta partie : " + codeActuel;
 }
 
-// PANNEAU DE CAPTURE
 function afficherCapture(titre, message) {
     document.getElementById("capturePanel").style.display = "block";
     document.getElementById("captureTitre").textContent = titre;
@@ -65,24 +78,48 @@ function ajouterBouton(texte, action, parent) {
     return bouton;
 }
 
+function afficherMonRole() {
+    if (roleActuel === "cat") {
+        afficherStatut("🐱 Tu es le CHAT !");
+    } else {
+        afficherStatut("🐭 Tu es une SOURIS !");
+    }
+}
+
+
+// ============================================
 // CONNEXION ANONYME
+// ============================================
+
 async function connecterJoueur() {
     const { data, error } = await clientSupabase.auth.getSession();
+
     if (error) throw error;
+
     if (data.session) return;
 
     const resultat = await clientSupabase.auth.signInAnonymously();
+
     if (resultat.error) throw resultat.error;
 }
 
+
+// ============================================
 // SAUVEGARDER LA PARTIE
+// ============================================
+
 function sauvegarderPartie() {
-    localStorage.setItem(CLE_PARTIE, JSON.stringify({
-        code: codeActuel
-    }));
+    localStorage.setItem(
+        CLE_PARTIE,
+        JSON.stringify({ code: codeActuel })
+    );
 }
 
+
+// ============================================
 // RETROUVER SA PARTIE
+// ============================================
+
 async function retrouverPartie() {
     try {
         const sauvegarde = localStorage.getItem(CLE_PARTIE);
@@ -101,6 +138,7 @@ async function retrouverPartie() {
         }
 
         await connecterJoueur();
+
         afficherStatut("Recherche de ta partie...");
 
         const { data, error } = await clientSupabase.rpc(
@@ -109,10 +147,10 @@ async function retrouverPartie() {
         );
 
         if (error) throw error;
-console.log("Vérification automatique :", data);
+
         if (!data || data.length === 0) {
             localStorage.removeItem(CLE_PARTIE);
-            afficherStatut("Partie introuvable. Rejoins une nouvelle partie.");
+            afficherStatut("Partie terminée ou introuvable. Rejoins une nouvelle partie.");
             return;
         }
 
@@ -133,15 +171,11 @@ console.log("Vérification automatique :", data);
     }
 }
 
-function afficherMonRole() {
-    if (roleActuel === "cat") {
-        afficherStatut("🐱 Tu es le CHAT !");
-    } else {
-        afficherStatut("🐭 Tu es une SOURIS !");
-    }
-}
 
+// ============================================
 // PERSONNAGE DU JOUEUR
+// ============================================
+
 function creerPersonnage(direction) {
     return L.divIcon({
         className: "player-marker",
@@ -160,12 +194,17 @@ function creerPersonnage(direction) {
     });
 }
 
+
+// ============================================
 // CRÉER UNE PARTIE
+// ============================================
+
 async function creerPartie() {
     try {
         await connecterJoueur();
 
         const pseudo = prompt("Quel est ton pseudo ?");
+
         if (!pseudo || !pseudo.trim()) return;
 
         afficherStatut("Création de la partie...");
@@ -176,7 +215,7 @@ async function creerPartie() {
         );
 
         if (error) throw error;
-        console.log("Vérification de la partie :", data);
+
         const partie = data[0];
 
         codeActuel = partie.room_code;
@@ -196,15 +235,21 @@ async function creerPartie() {
     }
 }
 
+
+// ============================================
 // REJOINDRE UNE PARTIE
+// ============================================
+
 async function rejoindrePartie() {
     try {
         await connecterJoueur();
 
         const pseudo = prompt("Quel est ton pseudo ?");
+
         if (!pseudo || !pseudo.trim()) return;
 
         const code = prompt("Entre le code de la partie :");
+
         if (!code || !code.trim()) return;
 
         afficherStatut("Connexion à la partie...");
@@ -238,7 +283,11 @@ async function rejoindrePartie() {
     }
 }
 
+
+// ============================================
 // ENVOYER SA POSITION
+// ============================================
+
 async function envoyerPosition(latitude, longitude, direction) {
     if (!codeActuel) return;
 
@@ -257,7 +306,11 @@ async function envoyerPosition(latitude, longitude, direction) {
     }
 }
 
+
+// ============================================
 // DISTANCE ENTRE DEUX POSITIONS
+// ============================================
+
 function calculerDistance(lat1, lng1, lat2, lng2) {
     const rayon = 6371000;
     const radians = valeur => valeur * Math.PI / 180;
@@ -277,7 +330,241 @@ function calculerDistance(lat1, lng1, lat2, lng2) {
     );
 }
 
+
+// ============================================
+// ACTUALISER LES POSITIONS DES SOURIS
+// ============================================
+
+async function actualiserSouris() {
+    if (!codeActuel || roleActuel !== "cat") return;
+
+    const { data, error } = await clientSupabase.rpc(
+        "get_visible_positions",
+        { p_code: codeActuel }
+    );
+
+    if (error) {
+        console.error("Erreur positions des souris :", error);
+        return;
+    }
+
+    const sourisVisibles = data || [];
+    const idsVisibles = [];
+
+    sourisVisibles.forEach(souris => {
+        idsVisibles.push(souris.player_id);
+
+        const position = [
+            souris.latitude,
+            souris.longitude
+        ];
+
+        if (!marqueursSouris[souris.player_id]) {
+            marqueursSouris[souris.player_id] = L.marker(
+                position,
+                {
+                    icon: L.divIcon({
+                        className: "mouse-marker",
+                        html: "🐭",
+                        iconSize: [35, 35],
+                        iconAnchor: [17, 17]
+                    })
+                }
+            ).addTo(carte);
+        } else {
+            marqueursSouris[souris.player_id].setLatLng(position);
+        }
+
+        marqueursSouris[souris.player_id].bindTooltip(
+            souris.display_name
+        );
+    });
+
+    Object.keys(marqueursSouris).forEach(id => {
+        if (!idsVisibles.includes(id)) {
+            carte.removeLayer(marqueursSouris[id]);
+            delete marqueursSouris[id];
+        }
+    });
+
+    // Vérifier si une souris est à portée
+    let sourisProche = null;
+
+    if (latitudeActuelle !== null && longitudeActuelle !== null) {
+        for (const souris of sourisVisibles) {
+            const distance = calculerDistance(
+                latitudeActuelle,
+                longitudeActuelle,
+                souris.latitude,
+                souris.longitude
+            );
+
+            if (distance <= DISTANCE_CAPTURE) {
+                sourisProche = souris;
+                break;
+            }
+        }
+    }
+
+    // Réinitialiser une ancienne demande expirée
+    if (
+        demandeEnCours !== null &&
+        Date.now() - demandeEnCours > 30000
+    ) {
+        demandeEnCours = null;
+        sourisProcheId = null;
+        cacherCapture();
+    }
+
+    if (!sourisProche || demandeEnCours !== null) {
+        if (demandeEnCours === null) {
+            sourisProcheId = null;
+            cacherCapture();
+        }
+        return;
+    }
+
+    if (sourisProcheId === sourisProche.player_id) return;
+
+    sourisProcheId = sourisProche.player_id;
+
+    afficherCapture(
+        "🐱 Capture possible !",
+        "Tu es suffisamment proche de " + sourisProche.display_name
+    );
+
+    ajouterBouton(
+        "Je t'ai touché !",
+        () => demanderCapture(sourisProche.player_id),
+        document.getElementById("captureActions")
+    );
+}
+
+
+// ============================================
+// DEMANDER UNE CAPTURE
+// ============================================
+
+async function demanderCapture(mousePlayerId) {
+    if (demandeEnCours !== null) return;
+
+    const { error } = await clientSupabase.rpc(
+        "request_capture",
+        {
+            p_code: codeActuel,
+            p_mouse_player_id: mousePlayerId
+        }
+    );
+
+    if (error) {
+        console.error("Erreur de capture :", error);
+        alert("Capture impossible : " + error.message);
+        return;
+    }
+
+    demandeEnCours = Date.now();
+
+    afficherCapture(
+        "⏳ Capture demandée",
+        "En attente de la confirmation de la souris..."
+    );
+}
+
+
+// ============================================
+// VÉRIFIER LES DEMANDES DE CAPTURE
+// ============================================
+
+async function verifierDemandeCapture() {
+    if (!codeActuel || roleActuel !== "mouse") return;
+
+    const { data, error } = await clientSupabase.rpc(
+        "get_my_capture_request",
+        { p_code: codeActuel }
+    );
+
+    if (error) {
+        console.error("Erreur demande de capture :", error);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        if (demandeAfficheeId !== null) {
+            demandeAfficheeId = null;
+            cacherCapture();
+        }
+        return;
+    }
+
+    const demande = data[0];
+
+    if (demandeAfficheeId === demande.request_id) return;
+
+    demandeAfficheeId = demande.request_id;
+
+    afficherCapture(
+        "🐱 Le chat t'a touché !",
+        demande.cat_name + " affirme t'avoir attrapé. Tu confirmes ?"
+    );
+
+    ajouterBouton(
+        "✅ Confirmer",
+        () => repondreCapture(demande.request_id, true),
+        document.getElementById("captureActions")
+    );
+
+    ajouterBouton(
+        "❌ Il ne m'a pas touché",
+        () => repondreCapture(demande.request_id, false),
+        document.getElementById("captureActions")
+    );
+}
+
+
+// ============================================
+// RÉPONDRE À UNE DEMANDE DE CAPTURE
+// ============================================
+
+async function repondreCapture(requestId, confirmer) {
+    if (traitementDemande) return;
+
+    traitementDemande = true;
+
+    try {
+        const { error } = await clientSupabase.rpc(
+            "respond_to_capture",
+            {
+                p_request_id: requestId,
+                p_confirm: confirmer
+            }
+        );
+
+        if (error) throw error;
+
+        demandeAfficheeId = null;
+        cacherCapture();
+
+        if (confirmer) {
+            afficherStatut("🐱 Tu es maintenant le CHAT !");
+        } else {
+            afficherStatut("🐭 Capture refusée !");
+        }
+
+        await actualiserMonRole();
+
+    } catch (error) {
+        console.error("Erreur de réponse :", error);
+        alert("Impossible de répondre : " + error.message);
+    } finally {
+        traitementDemande = false;
+    }
+}
+
+
+// ============================================
 // GÉRER LES ACTUALISATIONS
+// ============================================
+
 function reglerActualisations() {
     if (actualisation !== null) {
         clearInterval(actualisation);
@@ -295,6 +582,7 @@ function reglerActualisations() {
         Object.values(marqueursSouris).forEach(marker => {
             carte.removeLayer(marker);
         });
+
         marqueursSouris = {};
     }
 
@@ -303,11 +591,48 @@ function reglerActualisations() {
         actualisation = setInterval(actualiserSouris, 3000);
     } else {
         verifierDemandeCapture();
-        actualisationDemande = setInterval(verifierDemandeCapture, 2000);
+        actualisationDemande = setInterval(
+            verifierDemandeCapture,
+            2000
+        );
     }
 }
 
+
+// ============================================
+// ARRÊTER LE GPS
+// ============================================
+
+function arreterGPS() {
+    if (suiviGPS !== null) {
+        navigator.geolocation.clearWatch(suiviGPS);
+        suiviGPS = null;
+    }
+
+    if (actualisation !== null) {
+        clearInterval(actualisation);
+        actualisation = null;
+    }
+
+    if (actualisationRole !== null) {
+        clearInterval(actualisationRole);
+        actualisationRole = null;
+    }
+
+    if (actualisationDemande !== null) {
+        clearInterval(actualisationDemande);
+        actualisationDemande = null;
+    }
+
+    afficherStatut("GPS arrêté. Ta partie reste sauvegardée.");
+    cacherCapture();
+}
+
+
+// ============================================
 // DÉMARRER LE GPS
+// ============================================
+
 function demarrerGPS() {
     if (!navigator.geolocation) {
         afficherStatut("Ton navigateur ne permet pas la géolocalisation.");
@@ -321,6 +646,7 @@ function demarrerGPS() {
                 longitudeActuelle = position.coords.longitude;
 
                 const direction = position.coords.heading ?? 0;
+
                 const positionGPS = [
                     latitudeActuelle,
                     longitudeActuelle
@@ -357,13 +683,18 @@ function demarrerGPS() {
     }
 
     if (actualisationRole === null) {
+        actualiserMonRole();
         actualisationRole = setInterval(actualiserMonRole, 3000);
     }
 
     reglerActualisations();
 }
 
-// ACTUALISER SON RÔLE
+
+// ============================================
+// ACTUALISER SON RÔLE ET DÉTECTER LA FIN
+// ============================================
+
 async function actualiserMonRole() {
     if (!codeActuel) return;
 
@@ -377,16 +708,21 @@ async function actualiserMonRole() {
         return;
     }
 
-    // La partie est terminée ou le joueur a été retiré
+    // Le joueur n'est plus actif : la partie est terminée
     if (!data || data.length === 0) {
-        clearInterval(actualisationRole);
-        clearInterval(actualisation);
-        clearInterval(actualisationDemande);
-
         arreterGPS();
+
         localStorage.removeItem(CLE_PARTIE);
 
+        Object.values(marqueursSouris).forEach(marker => {
+            carte.removeLayer(marker);
+        });
+
+        marqueursSouris = {};
+
+        afficherStatut("🏁 La partie est terminée !");
         alert("🏁 La partie est terminée ! Le chat a quitté la partie.");
+
         window.location.reload();
         return;
     }
@@ -395,36 +731,17 @@ async function actualiserMonRole() {
 
     if (partie.player_role !== roleActuel) {
         roleActuel = partie.player_role;
+
         afficherMonRole();
         reglerActualisations();
     }
 }
-// ARRÊTER LE GPS SANS QUITTER LA PARTIE
-function arreterGPS() {
-    if (suiviGPS !== null) {
-        navigator.geolocation.clearWatch(suiviGPS);
-        suiviGPS = null;
-    }
 
-    if (actualisation !== null) {
-        clearInterval(actualisation);
-        actualisation = null;
-    }
 
-    if (actualisationRole !== null) {
-        clearInterval(actualisationRole);
-        actualisationRole = null;
-    }
-
-    if (actualisationDemande !== null) {
-        clearInterval(actualisationDemande);
-        actualisationDemande = null;
-    }
-
-    afficherStatut("GPS arrêté. Ta partie reste sauvegardée.");
-    cacherCapture();
-}
+// ============================================
 // QUITTER LA PARTIE
+// ============================================
+
 async function quitterPartie() {
     if (!codeActuel) {
         alert("Tu n'es dans aucune partie.");
@@ -448,9 +765,11 @@ async function quitterPartie() {
         if (error) throw error;
 
         arreterGPS();
+
         localStorage.removeItem(CLE_PARTIE);
 
         alert("Tu as quitté la partie !");
+
         window.location.reload();
 
     } catch (error) {
@@ -458,7 +777,12 @@ async function quitterPartie() {
         alert("Impossible de quitter la partie : " + error.message);
     }
 }
+
+
+// ============================================
 // AU CHARGEMENT DE LA PAGE
+// ============================================
+
 window.addEventListener("load", retrouverPartie);
 
 console.log("🐱 Le jeu du chat est chargé !");
