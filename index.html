@@ -152,7 +152,19 @@
     </div>
 
     <div id="map"></div>
-
+<div id="capturePanel" style="
+    display: none;
+    background: white;
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 18px;
+    border: 2px solid #237a3b;
+    border-radius: 12px;
+">
+    <h2 id="captureTitre">🐱 Capture</h2>
+    <p id="captureMessage"></p>
+    <div id="captureActions"></div>
+</div>
     <button onclick="creerPartie()">🐱 Créer une partie</button>
     <button onclick="rejoindrePartie()">🐭 Rejoindre une partie</button>
     <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
