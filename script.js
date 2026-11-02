@@ -661,7 +661,40 @@ function arreterGPS() {
     afficherStatut("GPS arrêté. Ta partie reste sauvegardée.");
     cacherCapture();
 }
+// QUITTER LA PARTIE
+async function quitterPartie() {
+    if (!codeActuel) {
+        alert("Tu n'es dans aucune partie.");
+        return;
+    }
 
+    const confirmation = confirm(
+        "Veux-tu vraiment quitter cette partie ?"
+    );
+
+    if (!confirmation) return;
+
+    try {
+        afficherStatut("Déconnexion de la partie...");
+
+        const { error } = await clientSupabase.rpc(
+            "leave_game",
+            { p_code: codeActuel }
+        );
+
+        if (error) throw error;
+
+        arreterGPS();
+        localStorage.removeItem(CLE_PARTIE);
+
+        alert("Tu as quitté la partie !");
+        window.location.reload();
+
+    } catch (error) {
+        console.error("Erreur pour quitter :", error);
+        alert("Impossible de quitter la partie : " + error.message);
+    }
+}
 // AU CHARGEMENT DE LA PAGE
 window.addEventListener("load", retrouverPartie);
 
