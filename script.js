@@ -176,7 +176,7 @@ async function creerPartie() {
         );
 
         if (error) throw error;
-
+        console.log("Vérification de la partie :", data);
         const partie = data[0];
 
         codeActuel = partie.room_code;
