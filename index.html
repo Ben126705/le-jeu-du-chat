@@ -9,9 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -27,13 +25,9 @@
             padding: 20px 10px;
         }
 
-        header h1 {
-            margin: 0 0 8px;
-        }
+        header h1 { margin: 0 0 8px; }
 
-        main {
-            padding: 15px;
-        }
+        main { padding: 15px; }
 
         #map {
             width: 100%;
@@ -57,9 +51,7 @@
             cursor: pointer;
         }
 
-        button:hover {
-            background: #17652e;
-        }
+        button:hover { background: #17652e; }
 
         #infos {
             background: white;
@@ -70,7 +62,7 @@
             overflow-wrap: anywhere;
         }
 
-        .player-marker {
+        .player-marker, .mouse-marker {
             background: transparent;
             border: none;
         }
@@ -128,25 +120,17 @@
             z-index: 2;
         }
 
-        .mouse-marker {
-            background: transparent;
-            border: none;
-            font-size: 30px;
-        }
+        .mouse-marker { font-size: 30px; }
 
         @media (max-width: 600px) {
-            header h1 {
-                font-size: 25px;
-            }
+            header h1 { font-size: 25px; }
 
             button {
                 width: 90%;
                 max-width: 350px;
             }
 
-            #map {
-                height: 55vh;
-            }
+            #map { height: 55vh; }
         }
     </style>
 </head>
@@ -187,10 +171,15 @@
     // VARIABLES DU JEU
     let codeActuel = null;
     let roleActuel = null;
+    let pseudoActuel = null;
+    let identifiantJoueur = null;
+
     let suiviGPS = null;
     let marqueurJoueur = null;
     let marqueursSouris = {};
     let actualisation = null;
+
+    const CLE_PARTIE = "jeuDuChat_partie";
 
     // CARTE
     const carte = L.map("map").setView([48.5, 10], 4);
@@ -202,28 +191,91 @@
         }
     ).addTo(carte);
 
-    // AFFICHAGE DU STATUT
     function afficherStatut(message) {
         document.getElementById("statut").textContent = message;
     }
 
     // CONNEXION ANONYME
     async function connecterJoueur() {
-        const { data: sessionData } =
-            await clientSupabase.auth.getSession();
+        const { data, error } = await clientSupabase.auth.getSession();
 
-        if (sessionData.session) {
-            return true;
+        if (error) throw error;
+
+        if (data.session) return;
+
+        const resultat = await clientSupabase.auth.signInAnonymously();
+
+        if (resultat.error) throw resultat.error;
+    }
+
+    // SAUVEGARDER LA PARTIE DANS LE NAVIGATEUR
+    function sauvegarderPartie() {
+        localStorage.setItem(CLE_PARTIE, JSON.stringify({
+            code: codeActuel
+        }));
+    }
+
+    // RETROUVER SA PARTIE
+    async function retrouverPartie() {
+        try {
+            const sauvegarde = localStorage.getItem(CLE_PARTIE);
+
+            if (!sauvegarde) {
+                afficherStatut("Bienvenue ! Crée une partie ou rejoins-en une.");
+                return;
+            }
+
+            const anciennePartie = JSON.parse(sauvegarde);
+
+            if (!anciennePartie.code) {
+                localStorage.removeItem(CLE_PARTIE);
+                afficherStatut("Bienvenue ! Crée une partie ou rejoins-en une.");
+                return;
+            }
+
+            await connecterJoueur();
+
+            afficherStatut("Recherche de ta partie...");
+
+            const { data, error } = await clientSupabase.rpc(
+                "get_my_game",
+                { p_code: anciennePartie.code }
+            );
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                localStorage.removeItem(CLE_PARTIE);
+                afficherStatut("Partie introuvable. Rejoins une nouvelle partie.");
+                return;
+            }
+
+            const partie = data[0];
+
+            codeActuel = partie.room_code;
+            identifiantJoueur = partie.player_id;
+            roleActuel = partie.player_role;
+            pseudoActuel = partie.display_name;
+
+            afficherCode();
+
+            if (roleActuel === "cat") {
+                afficherStatut("🐱 Partie retrouvée ! Tu es toujours le CHAT.");
+            } else {
+                afficherStatut("🐭 Partie retrouvée ! Tu es toujours une SOURIS.");
+            }
+
+            demarrerGPS();
+
+        } catch (error) {
+            console.error("Erreur de récupération :", error);
+            afficherStatut("Impossible de retrouver la partie : " + error.message);
         }
+    }
 
-        const { error } =
-            await clientSupabase.auth.signInAnonymously();
-
-        if (error) {
-            throw error;
-        }
-
-        return true;
+    function afficherCode() {
+        document.getElementById("codePartie").textContent =
+            "Code de ta partie : " + codeActuel;
     }
 
     // PERSONNAGE DU JOUEUR
@@ -245,21 +297,20 @@
         });
     }
 
-    // CREER UNE PARTIE
+    // CRÉER UNE PARTIE
     async function creerPartie() {
         try {
             await connecterJoueur();
 
             const pseudo = prompt("Quel est ton pseudo ?");
-
             if (!pseudo || !pseudo.trim()) return;
 
             afficherStatut("Création de la partie...");
 
-            const { data, error } =
-                await clientSupabase.rpc("create_game", {
-                    p_display_name: pseudo.trim()
-                });
+            const { data, error } = await clientSupabase.rpc(
+                "create_game",
+                { p_display_name: pseudo.trim() }
+            );
 
             if (error) throw error;
 
@@ -267,10 +318,11 @@
 
             codeActuel = partie.room_code;
             roleActuel = partie.player_role;
+            identifiantJoueur = partie.player_id;
+            pseudoActuel = pseudo.trim();
 
-            document.getElementById("codePartie").textContent =
-                "Code de ta partie : " + codeActuel;
-
+            sauvegarderPartie();
+            afficherCode();
             afficherStatut("🐱 Tu es le CHAT !");
 
             demarrerGPS();
@@ -295,11 +347,13 @@
 
             afficherStatut("Connexion à la partie...");
 
-            const { data, error } =
-                await clientSupabase.rpc("join_game", {
+            const { data, error } = await clientSupabase.rpc(
+                "join_game",
+                {
                     p_code: code.trim(),
                     p_display_name: pseudo.trim()
-                });
+                }
+            );
 
             if (error) throw error;
 
@@ -307,10 +361,11 @@
 
             codeActuel = partie.room_code;
             roleActuel = partie.player_role;
+            identifiantJoueur = partie.player_id;
+            pseudoActuel = pseudo.trim();
 
-            document.getElementById("codePartie").textContent =
-                "Partie : " + codeActuel;
-
+            sauvegarderPartie();
+            afficherCode();
             afficherStatut("🐭 Tu es une SOURIS !");
 
             demarrerGPS();
@@ -322,10 +377,29 @@
         }
     }
 
-    // DEMARRER LE GPS
+    // ENVOYER SA POSITION
+    async function envoyerPosition(latitude, longitude, direction) {
+        if (!codeActuel) return;
+
+        const { error } = await clientSupabase.rpc(
+            "update_my_position",
+            {
+                p_code: codeActuel,
+                p_lat: latitude,
+                p_lng: longitude,
+                p_heading: direction
+            }
+        );
+
+        if (error) {
+            console.error("Erreur d'envoi de position :", error);
+        }
+    }
+
+    // DÉMARRER LE GPS
     function demarrerGPS() {
         if (!navigator.geolocation) {
-            alert("Ton navigateur ne permet pas le GPS.");
+            afficherStatut("Ton navigateur ne permet pas la géolocalisation.");
             return;
         }
 
@@ -351,24 +425,11 @@
 
                 carte.setView(positionGPS, 16);
 
-                // Envoyer sa position au serveur
-                if (codeActuel) {
-                    const { error } =
-                        await clientSupabase.rpc("update_my_position", {
-                            p_code: codeActuel,
-                            p_lat: latitude,
-                            p_lng: longitude,
-                            p_heading: direction
-                        });
-
-                    if (error) {
-                        console.error("Erreur position :", error);
-                    }
-                }
+                await envoyerPosition(latitude, longitude, direction);
             },
             function(error) {
-                alert("Erreur GPS : " + error.message);
-                arreterGPS();
+                console.error("Erreur GPS :", error);
+                afficherStatut("Erreur GPS : " + error.message);
             },
             {
                 enableHighAccuracy: true,
@@ -377,33 +438,35 @@
             }
         );
 
-        // Le chat actualise les positions des souris
+        // Le chat voit uniquement les souris
         if (roleActuel === "cat") {
-            actualisation = setInterval(
-                actualiserSouris,
-                3000
-            );
+            actualiserSouris();
+            actualisation = setInterval(actualiserSouris, 3000);
         }
     }
 
-    // LE CHAT CONSULTE LES POSITIONS DES SOURIS
+    // LE CHAT RÉCUPÈRE LES POSITIONS DES SOURIS
     async function actualiserSouris() {
         if (!codeActuel || roleActuel !== "cat") return;
 
-        const { data, error } =
-            await clientSupabase.rpc("get_visible_positions", {
-                p_code: codeActuel
-            });
+        const { data, error } = await clientSupabase.rpc(
+            "get_visible_positions",
+            { p_code: codeActuel }
+        );
 
         if (error) {
-            console.error("Erreur positions :", error);
+            console.error("Erreur positions des souris :", error);
             return;
         }
 
         const sourisVisibles = new Set();
 
-        data.forEach(function(souris, index) {
-            const identifiant = souris.display_name + "_" + index;
+        (data || []).forEach(function(souris) {
+            const identifiant = souris.player_id;
+
+            // Ne pas afficher son propre personnage comme souris
+            if (identifiant === identifiantJoueur) return;
+
             sourisVisibles.add(identifiant);
 
             const position = [
@@ -430,7 +493,7 @@
             }
         });
 
-        // Retirer les souris qui ne sont plus présentes
+        // Supprimer les souris qui ne sont plus actives ou visibles
         Object.keys(marqueursSouris).forEach(function(id) {
             if (!sourisVisibles.has(id)) {
                 carte.removeLayer(marqueursSouris[id]);
@@ -439,7 +502,7 @@
         });
     }
 
-    // ARRETER LE GPS
+    // ARRÊTER LE GPS SANS QUITTER LA PARTIE
     function arreterGPS() {
         if (suiviGPS !== null) {
             navigator.geolocation.clearWatch(suiviGPS);
@@ -451,8 +514,11 @@
             actualisation = null;
         }
 
-        afficherStatut("GPS arrêté.");
+        afficherStatut("GPS arrêté. Ta partie reste sauvegardée.");
     }
+
+    // AU CHARGEMENT DE LA PAGE
+    window.addEventListener("load", retrouverPartie);
 
     console.log("🐱 Le jeu du chat est chargé !");
 </script>
