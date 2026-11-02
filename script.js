@@ -109,7 +109,7 @@ async function retrouverPartie() {
         );
 
         if (error) throw error;
-
+console.log("Vérification automatique :", data);
         if (!data || data.length === 0) {
             localStorage.removeItem(CLE_PARTIE);
             afficherStatut("Partie introuvable. Rejoins une nouvelle partie.");
