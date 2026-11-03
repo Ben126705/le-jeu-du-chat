@@ -79,10 +79,14 @@ function ajouterBouton(texte, action, parent) {
 }
 
 function afficherMonRole() {
+    const bonusPanel = document.getElementById("bonusPanel");
+
     if (roleActuel === "cat") {
         afficherStatut("🐱 Tu es le CHAT !");
+        bonusPanel.style.display = "none";
     } else {
         afficherStatut("🐭 Tu es une SOURIS !");
+        bonusPanel.style.display = "block";
     }
 }
 
