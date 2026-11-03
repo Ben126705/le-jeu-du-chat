@@ -104,11 +104,37 @@ async function actualiserEtatBonus() {
     }
 
     const panel = document.getElementById("bonusPanel");
+    const statut = document.getElementById("bonusStatut");
 
-    if (!data || data.length === 0 || data[0].bonus_used) {
+    if (!data || data.length === 0) {
         panel.style.display = "none";
-    } else {
+        return;
+    }
+
+    const bonus = data[0];
+
+    if (!bonus.bonus_used) {
         panel.style.display = "block";
+        statut.textContent = "🎁 Choisis ton bonus !";
+        return;
+    }
+
+    panel.style.display = "block";
+
+    if (bonus.bonus_type === "cat_radar" && bonus.bonus_expires_at) {
+        const restant = new Date(bonus.bonus_expires_at).getTime() - Date.now();
+
+        if (restant > 0) {
+            const minutes = Math.floor(restant / 60000);
+            const secondes = Math.floor((restant % 60000) / 1000);
+
+            statut.textContent =
+                `📍 Radar actif : ${minutes} min ${secondes} s restantes`;
+        } else {
+            statut.textContent = "📍 Ton radar est terminé.";
+        }
+    } else {
+        statut.textContent = "🎁 Ton bonus a été utilisé.";
     }
 }
 
