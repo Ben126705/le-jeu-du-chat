@@ -531,7 +531,53 @@ async function demanderCapture(mousePlayerId) {
 // ============================================
 // VÉRIFIER LES DEMANDES DE CAPTURE
 // ============================================
+// ============================================
+// RADAR : VOIR LA POSITION DU CHAT
+// ============================================
 
+async function actualiserRadarChat() {
+    if (!codeActuel || roleActuel !== "mouse") return;
+
+    const { data, error } = await clientSupabase.rpc(
+        "get_cat_position_for_radar",
+        { p_code: codeActuel }
+    );
+
+    if (error) {
+        console.error("Erreur radar :", error);
+        return;
+    }
+
+    const chat = data && data.length > 0 ? data[0] : null;
+
+    // Radar expiré ou indisponible : retirer le marqueur
+    if (!chat) {
+        if (window.marqueurChatRadar) {
+            carte.removeLayer(window.marqueurChatRadar);
+            window.marqueurChatRadar = null;
+        }
+        return;
+    }
+
+    const positionChat = [chat.latitude, chat.longitude];
+
+    if (!window.marqueurChatRadar) {
+        window.marqueurChatRadar = L.marker(positionChat, {
+            icon: L.divIcon({
+                className: "cat-radar-marker",
+                html: "🐱",
+                iconSize: [35, 35],
+                iconAnchor: [17, 17]
+            })
+        }).addTo(carte);
+    } else {
+        window.marqueurChatRadar.setLatLng(positionChat);
+    }
+
+    window.marqueurChatRadar.bindTooltip(
+        "🐱 Position du chat : " + chat.display_name
+    );
+}
 async function verifierDemandeCapture() {
     if (!codeActuel || roleActuel !== "mouse") return;
 
