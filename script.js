@@ -306,6 +306,38 @@ async function envoyerPosition(latitude, longitude, direction) {
     }
 }
 
+async function utiliserBonus(typeBonus) {
+    if (!codeActuel || roleActuel !== "mouse") {
+        alert("Seules les souris peuvent utiliser un bonus.");
+        return;
+    }
+
+    const bouton = document.getElementById("bonusPanel");
+    const statut = document.getElementById("bonusStatut");
+
+    if (!confirm("Veux-tu vraiment utiliser ce bonus ? Il sera consommé pour cette partie.")) {
+        return;
+    }
+
+    statut.textContent = "Activation du bonus...";
+
+    const { error } = await clientSupabase.rpc("use_bonus", {
+        p_code: codeActuel,
+        p_bonus_type: typeBonus
+    });
+
+    if (error) {
+        console.error("Erreur bonus :", error);
+        statut.textContent = "Impossible d'utiliser le bonus : " + error.message;
+        return;
+    }
+
+    bouton.style.display = "none";
+
+    statut.textContent = typeBonus === "freeze_cat"
+        ? "🧊 Le chat est immobilisé pendant 5 minutes !"
+        : "📍 Radar activé pendant 10 minutes !";
+}
 
 // ============================================
 // DISTANCE ENTRE DEUX POSITIONS
