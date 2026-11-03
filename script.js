@@ -89,7 +89,27 @@ function afficherMonRole() {
         bonusPanel.style.display = "block";
     }
 }
+async function actualiserEtatBonus() {
+    if (!codeActuel || roleActuel !== "mouse") return;
 
+    const { data, error } = await clientSupabase.rpc(
+        "get_my_bonus_status",
+        { p_code: codeActuel }
+    );
+
+    if (error) {
+        console.error("Erreur état bonus :", error);
+        return;
+    }
+
+    const panel = document.getElementById("bonusPanel");
+
+    if (!data || data.length === 0 || data[0].bonus_used) {
+        panel.style.display = "none";
+    } else {
+        panel.style.display = "block";
+    }
+}
 
 // ============================================
 // CONNEXION ANONYME
