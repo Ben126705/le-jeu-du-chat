@@ -87,6 +87,7 @@ function afficherMonRole() {
     } else {
         afficherStatut("🐭 Tu es une SOURIS !");
         bonusPanel.style.display = "block";
+        actualiserEtatBonus();
     }
 }
 async function actualiserEtatBonus() {
