@@ -133,6 +133,11 @@ async function actualiserEtatBonus() {
         } else {
             statut.textContent = "📍 Ton radar est terminé.";
         }
+        setInterval(() => {
+    if (roleActuel === "mouse") {
+        actualiserEtatBonus();
+    }
+}, 1000);
     } else {
         statut.textContent = "🎁 Ton bonus a été utilisé.";
     }
