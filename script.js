@@ -680,7 +680,10 @@ function reglerActualisations() {
     }
 
     cacherCapture();
-
+if (window.marqueurChatRadar) {
+    carte.removeLayer(window.marqueurChatRadar);
+    window.marqueurChatRadar = null;
+}
     if (roleActuel !== "cat") {
         Object.values(marqueursSouris).forEach(marker => {
             carte.removeLayer(marker);
