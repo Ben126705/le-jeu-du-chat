@@ -692,13 +692,15 @@ function reglerActualisations() {
     if (roleActuel === "cat") {
         actualiserSouris();
         actualisation = setInterval(actualiserSouris, 3000);
-    } else {
+   } else {
+    verifierDemandeCapture();
+    actualiserRadarChat();
+
+    actualisationDemande = setInterval(() => {
         verifierDemandeCapture();
-        actualisationDemande = setInterval(
-            verifierDemandeCapture,
-            2000
-        );
-    }
+        actualiserRadarChat();
+    }, 2000);
+}
 }
 
 
