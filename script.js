@@ -834,7 +834,36 @@ async function quitterPartie() {
         alert("Impossible de quitter la partie : " + error.message);
     }
 }
+async function utiliserBonus(typeBonus) {
+    if (!codeActuel || roleActuel !== "mouse") {
+        alert("Seules les souris peuvent utiliser un bonus.");
+        return;
+    }
 
+    if (!confirm("Veux-tu vraiment utiliser ce bonus ?")) return;
+
+    const statut = document.getElementById("bonusStatut");
+    const boutons = document.querySelectorAll("#bonusPanel button");
+
+    statut.textContent = "Activation du bonus...";
+
+    const { error } = await clientSupabase.rpc("use_bonus", {
+        p_code: codeActuel,
+        p_bonus_type: typeBonus
+    });
+
+    if (error) {
+        console.error("Erreur bonus :", error);
+        statut.textContent = "Erreur : " + error.message;
+        return;
+    }
+
+    boutons.forEach(bouton => bouton.style.display = "none");
+
+    statut.textContent = typeBonus === "freeze_cat"
+        ? "🧊 Bonus utilisé ! Le chat est immobilisé pendant 5 minutes."
+        : "📍 Bonus utilisé ! Le radar est activé pendant 10 minutes.";
+}
 
 // ============================================
 // AU CHARGEMENT DE LA PAGE
