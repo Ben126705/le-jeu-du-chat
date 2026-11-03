@@ -751,7 +751,7 @@ function demarrerGPS() {
 // ============================================
 // ACTUALISER SON RÔLE ET DÉTECTER LA FIN
 // ============================================
-
+let chatEtaitGele = false;
 async function actualiserMonRole() {
     if (!codeActuel) return;
 
@@ -786,11 +786,33 @@ async function actualiserMonRole() {
 
     const partie = data[0];
 
-    if (partie.player_role !== roleActuel) {
+        if (partie.player_role !== roleActuel) {
         roleActuel = partie.player_role;
+        chatEtaitGele = false;
 
         afficherMonRole();
         reglerActualisations();
+    }
+
+    if (roleActuel === "cat") {
+        const { data: bonus, error: erreurBonus } =
+            await clientSupabase.rpc(
+                "get_my_bonus_status",
+                { p_code: codeActuel }
+            );
+
+        if (!erreurBonus && bonus && bonus.length > 0) {
+            const gele = bonus[0].cat_frozen_until &&
+                new Date(bonus[0].cat_frozen_until).getTime() > Date.now();
+
+            if (gele) {
+                chatEtaitGele = true;
+                afficherStatut("🧊 TU ES IMMOBILISÉ ! Attends la fin des 5 minutes.");
+            } else if (chatEtaitGele) {
+                chatEtaitGele = false;
+                afficherStatut("🐱 Tu peux à nouveau bouger !");
+            }
+        }
     }
 }
 
