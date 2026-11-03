@@ -165,7 +165,31 @@
     <p id="captureMessage"></p>
     <div id="captureActions"></div>
 </div>
-    <button onclick="creerPartie()">🐱 Créer une partie</button>
+
+<div id="bonusPanel" style="
+    display: none;
+    background: #fff3cd;
+    max-width: 600px;
+    margin: 15px auto;
+    padding: 18px;
+    border: 2px solid #e0a800;
+    border-radius: 12px;
+">
+    <h2>🎁 Mes bonus</h2>
+    <p>Choisis un bonus à utiliser pendant cette partie :</p>
+
+    <button onclick="utiliserBonus('freeze_cat')">
+        🧊 Immobiliser le chat (5 min)
+    </button>
+
+    <button onclick="utiliserBonus('cat_radar')">
+        📍 Voir la position du chat (10 min)
+    </button>
+
+    <p id="bonusStatut"></p>
+</div>
+
+<button onclick="creerPartie()">🐱 Créer une partie</button>
     <button onclick="rejoindrePartie()">🐭 Rejoindre une partie</button>
  <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
 <button onclick="quitterPartie()">🚪 Quitter la partie</button>
