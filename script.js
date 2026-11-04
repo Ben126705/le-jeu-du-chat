@@ -27,6 +27,8 @@ let latitudeActuelle = null;
 let longitudeActuelle = null;
 let directionActuelle = 0;
 let actualisationPosition = null;
+let directionActuelle = 0;
+let actualisationPosition = null;
 
 let demandeEnCours = null;
 let demandeAfficheeId = null;
