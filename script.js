@@ -787,6 +787,7 @@ function demarrerGPS() {
                 longitudeActuelle = position.coords.longitude;
 
                 const direction = position.coords.heading ?? 0;
+                directionActuelle = direction;
 
                 const positionGPS = [
                     latitudeActuelle,
