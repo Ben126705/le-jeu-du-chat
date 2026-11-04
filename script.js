@@ -823,7 +823,20 @@ function demarrerGPS() {
             }
         );
     }
-
+    if (actualisationPosition === null) {
+        actualisationPosition = setInterval(() => {
+            if (
+                latitudeActuelle !== null &&
+                longitudeActuelle !== null
+            ) {
+                envoyerPosition(
+                    latitudeActuelle,
+                    longitudeActuelle,
+                    directionActuelle
+                );
+            }
+        }, 5000);
+    }
     if (actualisationRole === null) {
         actualiserMonRole();
         actualisationRole = setInterval(actualiserMonRole, 3000);
