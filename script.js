@@ -749,7 +749,10 @@ function arreterGPS() {
         navigator.geolocation.clearWatch(suiviGPS);
         suiviGPS = null;
     }
-
+if (actualisationPosition !== null) {
+    clearInterval(actualisationPosition);
+    actualisationPosition = null;
+}
     if (actualisation !== null) {
         clearInterval(actualisation);
         actualisation = null;
