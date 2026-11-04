@@ -801,7 +801,7 @@ function demarrerGPS() {
                     marqueurJoueur.setIcon(creerPersonnage(direction));
                 }
 
-                carte.setView(positionGPS, 16);
+               carte.panTo(positionGPS);
 
                 await envoyerPosition(
                     latitudeActuelle,
