@@ -1009,3 +1009,22 @@ function recentrerCarte() {
         carte.getZoom()
     );
 }
+async function mettrePleinEcran() {
+    const element = document.getElementById("map");
+
+    try {
+        if (!document.fullscreenElement) {
+            await element.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+
+        setTimeout(() => {
+            carte.invalidateSize();
+        }, 300);
+
+    } catch (erreur) {
+        alert("Impossible d'activer le plein écran.");
+        console.error(erreur);
+    }
+}
