@@ -1009,8 +1009,9 @@ function recentrerCarte() {
         carte.getZoom()
     );
 }
+
 async function mettrePleinEcran() {
-    const element = document.getElementById("map");
+    const element = document.getElementById("conteneurCarte");
 
     try {
         if (!document.fullscreenElement) {
@@ -1018,13 +1019,22 @@ async function mettrePleinEcran() {
         } else {
             await document.exitFullscreen();
         }
-
-        setTimeout(() => {
-            carte.invalidateSize();
-        }, 300);
-
     } catch (erreur) {
+        console.error("Erreur plein écran :", erreur);
         alert("Impossible d'activer le plein écran.");
-        console.error(erreur);
     }
 }
+
+document.addEventListener("fullscreenchange", () => {
+    const boutonEntrer = document.getElementById("boutonPleinEcran");
+    const boutonSortir = document.getElementById("quitterPleinEcran");
+
+    const pleinEcran = Boolean(document.fullscreenElement);
+
+    boutonEntrer.style.display = pleinEcran ? "none" : "block";
+    boutonSortir.style.display = pleinEcran ? "block" : "none";
+
+    setTimeout(() => {
+        carte.invalidateSize();
+    }, 300);
+});
