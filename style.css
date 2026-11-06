@@ -115,3 +115,12 @@ button:hover {
         padding: 12px;
     }
 }
+/* MODE PLEIN ÉCRAN */
+#map:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+}
