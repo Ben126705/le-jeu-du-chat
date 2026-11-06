@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -25,16 +27,26 @@
             padding: 20px 10px;
         }
 
-        header h1 { margin: 0 0 8px; }
+        header h1 {
+            margin: 0 0 8px;
+        }
 
-        main { padding: 15px; }
+        main {
+            padding: 15px;
+        }
+
+        #conteneurCarte {
+            position: relative;
+            width: 100%;
+            max-width: 1100px;
+            margin: 15px auto;
+        }
 
         #map {
             width: 100%;
-            max-width: 1100px;
             height: 60vh;
             min-height: 350px;
-            margin: 15px auto;
+            margin: 0;
             border: 3px solid #237a3b;
             border-radius: 12px;
             z-index: 1;
@@ -51,7 +63,17 @@
             cursor: pointer;
         }
 
-        button:hover { background: #17652e; }
+        button:hover {
+            background: #17652e;
+        }
+
+        #commandesCarte {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+        }
 
         #infos {
             background: white;
@@ -62,7 +84,8 @@
             overflow-wrap: anywhere;
         }
 
-        .player-marker, .mouse-marker {
+        .player-marker,
+        .mouse-marker {
             background: transparent;
             border: none;
         }
@@ -120,17 +143,105 @@
             z-index: 2;
         }
 
-        .mouse-marker { font-size: 30px; }
+        .mouse-marker {
+            font-size: 30px;
+        }
 
+        /* PANNEAUX */
+        #capturePanel {
+            display: none;
+            background: white;
+            max-width: 600px;
+            margin: 15px auto;
+            padding: 18px;
+            border: 2px solid #237a3b;
+            border-radius: 12px;
+        }
+
+        #bonusPanel {
+            display: none;
+            background: #fff3cd;
+            max-width: 600px;
+            margin: 15px auto;
+            padding: 18px;
+            border: 2px solid #e0a800;
+            border-radius: 12px;
+        }
+
+        /* MODE PLEIN ÉCRAN */
+        #conteneurCarte:fullscreen {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            margin: 0;
+            background: white;
+        }
+
+        #conteneurCarte:fullscreen #map {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            max-width: none;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        #conteneurCarte:fullscreen #commandesCarte {
+            position: absolute;
+            z-index: 1000;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            width: 210px;
+            padding: 0;
+        }
+
+        #conteneurCarte:fullscreen #commandesCarte button {
+            width: 100%;
+            margin: 3px 0;
+            box-shadow: 0 2px 6px #555;
+        }
+
+        /* VERSION MOBILE */
         @media (max-width: 600px) {
-            header h1 { font-size: 25px; }
+            header h1 {
+                font-size: 25px;
+            }
+
+            main {
+                padding: 8px;
+            }
+
+            main h2 {
+                font-size: 21px;
+            }
 
             button {
                 width: 90%;
                 max-width: 350px;
+                min-height: 50px;
+                font-size: 17px;
             }
 
-            #map { height: 55vh; }
+            #map {
+                height: 65vh;
+                min-height: 350px;
+            }
+
+            #infos,
+            #capturePanel,
+            #bonusPanel {
+                width: 100%;
+                padding: 12px;
+            }
+
+            #conteneurCarte:fullscreen #commandesCarte {
+                top: 8px;
+                right: 8px;
+                width: 190px;
+            }
         }
     </style>
 </head>
@@ -151,54 +262,63 @@
         <p id="codePartie"></p>
     </div>
 
-    <div id="map"></div>
-    <button onclick="recentrerCarte()">
-    🎯 Recentrer sur moi
-</button>
-    <button onclick="mettrePleinEcran()">
-    ⛶ Plein écran
-</button>
-<div id="capturePanel" style="
-    display: none;
-    background: white;
-    max-width: 600px;
-    margin: 15px auto;
-    padding: 18px;
-    border: 2px solid #237a3b;
-    border-radius: 12px;
-">
-    <h2 id="captureTitre">🐱 Capture</h2>
-    <p id="captureMessage"></p>
-    <div id="captureActions"></div>
-</div>
+    <!-- CARTE ET COMMANDES -->
+    <div id="conteneurCarte">
 
-<div id="bonusPanel" style="
-    display: none;
-    background: #fff3cd;
-    max-width: 600px;
-    margin: 15px auto;
-    padding: 18px;
-    border: 2px solid #e0a800;
-    border-radius: 12px;
-">
-    <h2>🎁 Mes bonus</h2>
-    <p>Choisis un bonus à utiliser pendant cette partie :</p>
+        <div id="map"></div>
 
-    <button onclick="utiliserBonus('freeze_cat')">
-        🧊 Immobiliser le chat (5 min)
-    </button>
+        <div id="commandesCarte">
 
-    <button onclick="utiliserBonus('cat_radar')">
-        📍 Voir la position du chat (10 min)
-    </button>
+            <button onclick="recentrerCarte()">
+                🎯 Recentrer sur moi
+            </button>
 
-    <p id="bonusStatut"></p>
-</div>
+            <button id="boutonPleinEcran"
+                    onclick="mettrePleinEcran()">
+                ⛶ Plein écran
+            </button>
 
-<button onclick="creerPartie()">🐱 Créer une partie</button>
+            <button id="quitterPleinEcran"
+                    onclick="mettrePleinEcran()"
+                    style="display:none;">
+                ❌ Quitter le plein écran
+            </button>
+
+        </div>
+    </div>
+
+    <!-- CAPTURE -->
+    <div id="capturePanel">
+        <h2 id="captureTitre">🐱 Capture</h2>
+        <p id="captureMessage"></p>
+        <div id="captureActions"></div>
+    </div>
+
+    <!-- BONUS -->
+    <div id="bonusPanel">
+        <h2>🎁 Mes bonus</h2>
+        <p>Choisis un bonus à utiliser pendant cette partie :</p>
+
+        <button onclick="utiliserBonus('freeze_cat')">
+            🧊 Immobiliser le chat (5 min)
+        </button>
+
+        <button onclick="utiliserBonus('cat_radar')">
+            📍 Voir la position du chat (10 min)
+        </button>
+
+        <p id="bonusStatut"></p>
+    </div>
+
+    <!-- COMMANDES DU JEU -->
+    <button onclick="creerPartie()">🐱 Créer une partie</button>
+
     <button onclick="rejoindrePartie()">🐭 Rejoindre une partie</button>
- <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
-<button onclick="quitterPartie()">🚪 Quitter la partie</button>
+
+    <button onclick="arreterGPS()">⏹️ Arrêter le GPS</button>
+
+    <button onclick="quitterPartie()">🚪 Quitter la partie</button>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
