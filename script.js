@@ -807,7 +807,7 @@ function demarrerGPS() {
                     marqueurJoueur.setIcon(creerPersonnage(direction));
                 }
 
-               carte.panTo(positionGPS);
+               // La carte ne se recentre plus automatiquement
 
                 await envoyerPosition(
                     latitudeActuelle,
