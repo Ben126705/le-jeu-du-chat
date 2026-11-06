@@ -995,3 +995,17 @@ async function utiliserBonus(typeBonus) {
 window.addEventListener("load", retrouverPartie);
 
 console.log("🐱 Le jeu du chat est chargé !");
+function recentrerCarte() {
+    if (
+        latitudeActuelle === null ||
+        longitudeActuelle === null
+    ) {
+        alert("Ta position GPS n'est pas encore disponible.");
+        return;
+    }
+
+    carte.setView(
+        [latitudeActuelle, longitudeActuelle],
+        carte.getZoom()
+    );
+}
