@@ -2,7 +2,6 @@
 // ============================================
 // 🐱 LE JEU DU CHAT
 // ============================================
-
 // CONNEXION SUPABASE
 const clientSupabase = window.supabase.createClient(
     "https://bqklelwzakgmgyucyfwu.supabase.co",
