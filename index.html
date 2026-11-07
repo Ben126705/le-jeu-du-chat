@@ -7,7 +7,7 @@
     <title>Le jeu du chat 🐱</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
- 
+
     <style>
         * {
             box-sizing: border-box;
@@ -65,6 +65,34 @@
 
         button:hover {
             background: #17652e;
+        }
+
+        input {
+            display: block;
+            width: 90%;
+            max-width: 350px;
+            padding: 13px;
+            margin: 10px auto;
+            border: 1px solid #aaa;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        #comptePanel {
+            background: white;
+            border: 2px solid #237a3b;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 15px auto;
+            padding: 18px;
+        }
+
+        #comptePanel h2 {
+            margin-top: 0;
+        }
+
+        #messageCompte {
+            overflow-wrap: anywhere;
         }
 
         #commandesCarte {
@@ -232,7 +260,8 @@
 
             #infos,
             #capturePanel,
-            #bonusPanel {
+            #bonusPanel,
+            #comptePanel {
                 width: 100%;
                 padding: 12px;
             }
@@ -260,6 +289,47 @@
     <div id="infos">
         <strong id="statut">Connexion en cours...</strong>
         <p id="codePartie"></p>
+    </div>
+
+    <!-- COMPTE UTILISATEUR -->
+    <div id="comptePanel">
+        <h2>👤 Mon compte</h2>
+
+        <p>
+            Crée un compte ou connecte-toi pour retrouver ton identité.
+        </p>
+
+        <input
+            type="email"
+            id="emailCompte"
+            placeholder="Ton adresse e-mail"
+            autocomplete="email"
+        >
+
+        <input
+            type="password"
+            id="motDePasseCompte"
+            placeholder="Ton mot de passe"
+            autocomplete="current-password"
+        >
+
+        <button type="button" onclick="creerCompteEmail()">
+            ✨ Créer un compte
+        </button>
+
+        <button type="button" onclick="connecterAvecEmail()">
+            🔑 Se connecter
+        </button>
+
+        <hr>
+
+        <button type="button" onclick="connecterAvecGoogle()">
+            🌐 Continuer avec Google
+        </button>
+
+        <p id="messageCompte">
+            🐭 Tu peux aussi jouer sans compte !
+        </p>
     </div>
 
     <!-- CARTE ET COMMANDES -->
