@@ -1185,7 +1185,101 @@ async function utiliserBonus(typeBonus) {
 // ============================================
 // AU CHARGEMENT DE LA PAGE
 // ============================================
+// ============================================
+// 💬 CHARGER LES MESSAGES DU CHAT
+// ============================================
 
+async function chargerMessagesChat() {
+    if (!codeActuel || chargementChatEnCours) return;
+
+    chargementChatEnCours = true;
+
+    try {
+        const { data, error } = await clientSupabase.rpc(
+            "get_chat_messages",
+            { p_code: codeActuel }
+        );
+
+        if (error) throw error;
+
+        const zone = document.getElementById("chatMessages");
+        if (!zone) return;
+
+        zone.replaceChildren();
+
+        if (!data || data.length === 0) {
+            const vide = document.createElement("p");
+            vide.textContent = "Aucun message pour le moment.";
+            zone.appendChild(vide);
+            return;
+        }
+
+        data.slice().reverse().forEach(msg => {
+            const ligne = document.createElement("p");
+
+            const role = msg.player_role === "cat"
+                ? "/chat/"
+                : "/souris/";
+
+            const auteur = document.createElement("strong");
+            auteur.textContent = role + " " + msg.display_name + " : ";
+
+            const texte = document.createElement("span");
+            texte.textContent = msg.message;
+
+            ligne.appendChild(auteur);
+            ligne.appendChild(texte);
+            zone.appendChild(ligne);
+        });
+
+        zone.scrollTop = zone.scrollHeight;
+
+    } catch (error) {
+        console.error("Erreur de chargement du chat :", error);
+    } finally {
+        chargementChatEnCours = false;
+    }
+}
+// ============================================
+// 💬 ENVOYER UN MESSAGE DANS LE CHAT
+// ============================================
+
+async function envoyerMessageChat() {
+    if (!codeActuel) {
+        alert("Tu dois d'abord rejoindre une partie.");
+        return;
+    }
+
+    const champ = document.getElementById("chatInput");
+    const message = champ.value.trim();
+
+    if (!message) return;
+
+    const bouton = document.querySelector("#chatPanel button");
+    bouton.disabled = true;
+
+    try {
+        const { error } = await clientSupabase.rpc(
+            "send_chat_message",
+            {
+                p_code: codeActuel,
+                p_message: message
+            }
+        );
+
+        if (error) throw error;
+
+        champ.value = "";
+        await chargerMessagesChat();
+
+    } catch (error) {
+        console.error("Erreur d'envoi du message :", error);
+        alert("Impossible d'envoyer le message : " + error.message);
+
+    } finally {
+        bouton.disabled = false;
+    }
+}
 window.addEventListener("load", retrouverPartie);
 window.addEventListener("load", afficherEtatCompte);
 
