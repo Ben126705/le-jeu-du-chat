@@ -902,10 +902,12 @@ function reglerActualisations() {
     }
 
     cacherCapture();
-if (window.marqueurChatRadar) {
-    carte.removeLayer(window.marqueurChatRadar);
-    window.marqueurChatRadar = null;
-}
+
+    if (window.marqueurChatRadar) {
+        carte.removeLayer(window.marqueurChatRadar);
+        window.marqueurChatRadar = null;
+    }
+
     if (roleActuel !== "cat") {
         Object.values(marqueursSouris).forEach(marker => {
             carte.removeLayer(marker);
@@ -915,21 +917,17 @@ if (window.marqueurChatRadar) {
     }
 
     if (roleActuel === "cat") {
-        actualisation = setInterval(() => {
-            actualiserSouris();
-        }, 3000);
-    }
-            actualiserSouris();
+        actualiserSouris();
         actualisation = setInterval(actualiserSouris, 3000);
-   } else {
-    verifierDemandeCapture();
-    actualiserRadarChat();
-
-    actualisationDemande = setInterval(() => {
+    } else {
         verifierDemandeCapture();
         actualiserRadarChat();
-    }, 2000);
-}
+
+        actualisationDemande = setInterval(() => {
+            verifierDemandeCapture();
+            actualiserRadarChat();
+        }, 2000);
+    }
 }
 
 
