@@ -379,7 +379,48 @@
 
         </div>
     </div>
+    <!-- CHAT DE LA PARTIE -->
+    <div id="chatPanel" style="
+        background: white;
+        border: 2px solid #237a3b;
+        border-radius: 12px;
+        max-width: 600px;
+        margin: 15px auto;
+        padding: 18px;
+    ">
+        <h2>💬 Discussion de la partie</h2>
 
+        <div id="chatMessages" style="
+            height: 220px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: left;
+            margin-bottom: 10px;
+        ">
+            <p>🐱🐭 Bienvenue dans le chat de la partie !</p>
+        </div>
+
+        <textarea
+            id="chatInput"
+            placeholder="Écris ton message..."
+            maxlength="500"
+            rows="2"
+            style="
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #aaa;
+                border-radius: 8px;
+                font-size: 16px;
+                resize: vertical;
+            "
+        ></textarea>
+
+        <button type="button" onclick="envoyerMessageChat()">
+            📩 Envoyer
+        </button>
+    </div>
     <!-- CAPTURE -->
     <div id="capturePanel">
         <h2 id="captureTitre">🐱 Capture</h2>
