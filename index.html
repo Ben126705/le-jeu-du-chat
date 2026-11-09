@@ -291,6 +291,18 @@
         <p id="codePartie"></p>
     </div>
 
+<button
+    id="boutonMonCompte"
+    type="button"
+    style="display:none;"
+    onclick="
+        document.getElementById('comptePanel').style.display = 'block';
+        document.getElementById('boutonMonCompte').style.display = 'none';
+    "
+>
+    👤 Mon compte
+</button>
+    
     <!-- COMPTE UTILISATEUR -->
     <div id="comptePanel">
         <h2>👤 Mon compte</h2>
@@ -329,7 +341,11 @@
         
         <button
     type="button"
-    onclick="document.getElementById('comptePanel').style.display = 'none';"
+    onclick="
+        localStorage.setItem('jeuDuChatSansCompte', 'oui');
+        document.getElementById('comptePanel').style.display = 'none';
+        document.getElementById('boutonMonCompte').style.display = 'inline-block';
+    "
 >
     🎮 Continuer sans compte
 </button>
@@ -401,6 +417,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="script.js"></script>
+    <script>
+    if (localStorage.getItem('jeuDuChatSansCompte') === 'oui') {
+        document.getElementById('comptePanel').style.display = 'none';
+        document.getElementById('boutonMonCompte').style.display = 'inline-block';
+    }
+</script>
 
 </body>
 </html>
