@@ -894,6 +894,16 @@ async function repondreCapture(requestId, confirmer) {
 // ============================================
 
 function reglerActualisations() {
+        // 💬 Actualisation automatique du chat
+    if (actualisationChat !== null) {
+        clearInterval(actualisationChat);
+        actualisationChat = null;
+    }
+
+    if (codeActuel) {
+        chargerMessagesChat();
+        actualisationChat = setInterval(chargerMessagesChat, 2000);
+    }
     if (actualisation !== null) {
         clearInterval(actualisation);
         actualisation = null;
@@ -961,6 +971,10 @@ if (actualisationPosition !== null) {
         clearInterval(actualisationDemande);
         actualisationDemande = null;
     }
+    if (actualisationChat !== null) {
+    clearInterval(actualisationChat);
+    actualisationChat = null;
+}
 
     afficherStatut("GPS arrêté. Ta partie reste sauvegardée.");
     cacherCapture();
