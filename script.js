@@ -22,6 +22,9 @@ let actualisation = null;
 let actualisationRole = null;
 let actualisationDemande = null;
 
+// VARIABLES DU CHAT
+let actualisationChat = null;
+let chargementChatEnCours = false;
 let latitudeActuelle = null;
 let longitudeActuelle = null;
 let directionActuelle = 0;
