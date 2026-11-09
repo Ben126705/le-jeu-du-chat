@@ -1,4 +1,3 @@
-
 // ============================================
 // 🐱 LE JEU DU CHAT
 // ============================================
@@ -163,6 +162,198 @@ async function connecterJoueur() {
 
 
 // ============================================
+// COMPTES UTILISATEURS (EMAIL ET GOOGLE)
+// Les connexions anonymes restent autorisées.
+// ============================================
+
+function afficherMessageCompte(message) {
+    const element = document.getElementById("messageCompte");
+    if (element) element.textContent = message;
+}
+
+function obtenirAdresseRetour() {
+    return window.location.origin + window.location.pathname;
+}
+
+async function afficherEtatCompte() {
+    try {
+        const { data, error } = await clientSupabase.auth.getUser();
+        if (error) throw error;
+
+        if (!data.user) {
+            afficherMessageCompte("🐭 Tu peux jouer anonymement ou créer un compte.");
+        } else if (data.user.is_anonymous) {
+            afficherMessageCompte("🐭 Tu joues actuellement sans compte. Tu peux continuer ainsi !");
+        } else {
+            afficherMessageCompte("✅ Tu es connecté avec un compte.");
+        }
+    } catch (error) {
+        console.error("Erreur de vérification du compte :", error);
+    }
+}
+
+async function creerCompteEmail() {
+    const email = document.getElementById("emailCompte").value.trim();
+    const motDePasse = document.getElementById("motDePasseCompte").value;
+
+    if (!email || !motDePasse) {
+        alert("Entre ton adresse e-mail et ton mot de passe.");
+        return;
+    }
+
+    if (motDePasse.length < 6) {
+        alert("Le mot de passe doit contenir au moins 6 caractères.");
+        return;
+    }
+
+    try {
+        afficherMessageCompte("Création du compte...");
+
+        const { data: sessionData, error: sessionError } =
+            await clientSupabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        const utilisateur = sessionData.session?.user;
+
+        // Si le joueur joue déjà anonymement, on rattache l'e-mail
+        // au même compte afin de conserver son identité dans le jeu.
+        if (utilisateur?.is_anonymous) {
+            const { error } = await clientSupabase.auth.updateUser(
+                { email, password: motDePasse },
+                { emailRedirectTo: obtenirAdresseRetour() }
+            );
+
+            if (error) throw error;
+
+            afficherMessageCompte(
+                                "📧 Vérifie ta boîte mail et clique sur le lien de confirmation. " +
+                "Ton compte de jeu sera conservé."
+            );
+            return;
+        }
+
+        // Si aucun compte n'est connecté, création d'un compte classique.
+        if (!utilisateur) {
+            const { data, error } = await clientSupabase.auth.signUp({
+                email,
+                password: motDePasse,
+                options: {
+                    emailRedirectTo: obtenirAdresseRetour()
+                }
+            });
+
+            if (error) throw error;
+
+            if (data.session) {
+                afficherMessageCompte("✅ Ton compte est créé et tu es connecté !");
+            } else {
+                afficherMessageCompte(
+                    "📧 Un e-mail de confirmation vient de t'être envoyé. " +
+                    "Clique sur le lien pour activer ton compte."
+                );
+            }
+            return;
+        }
+
+        afficherMessageCompte(
+            "Tu es déjà connecté avec un compte. Déconnecte-toi avant d'en créer un autre."
+        );
+
+    } catch (error) {
+        console.error("Erreur de création du compte :", error);
+        afficherMessageCompte("Impossible de créer le compte : " + error.message);
+    }
+}
+
+async function connecterAvecEmail() {
+    const email = document.getElementById("emailCompte").value.trim();
+    const motDePasse = document.getElementById("motDePasseCompte").value;
+
+    if (!email || !motDePasse) {
+        alert("Entre ton adresse e-mail et ton mot de passe.");
+        return;
+    }
+
+    // Changer de compte pendant une partie pourrait faire perdre
+    // l'accès à cette partie : on bloque donc cette action.
+    if (codeActuel) {
+        alert("Quitte d'abord ta partie avant de changer de compte.");
+        return;
+    }
+
+    try {
+        afficherMessageCompte("Connexion en cours...");
+
+        const { data: sessionData, error: sessionError } =
+            await clientSupabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        if (sessionData.session) {
+            const { error: deconnexionErreur } =
+                await clientSupabase.auth.signOut();
+
+            if (deconnexionErreur) throw deconnexionErreur;
+        }
+
+        const { error } = await clientSupabase.auth.signInWithPassword({
+            email,
+            password: motDePasse
+        });
+
+        if (error) throw error;
+
+        afficherMessageCompte("✅ Tu es connecté à ton compte !");
+        afficherStatut("Compte connecté. Tu peux créer ou rejoindre une partie.");
+
+    } catch (error) {
+        console.error("Erreur de connexion :", error);
+        afficherMessageCompte("Connexion impossible : " + error.message);
+    }
+}
+
+async function connecterAvecGoogle() {
+    try {
+        afficherMessageCompte("Ouverture de la connexion Google...");
+
+        const { data: sessionData, error: sessionError } =
+            await clientSupabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        const utilisateur = sessionData.session?.user;
+        const adresseRetour = obtenirAdresseRetour();
+
+        // Si une session anonyme existe, on rattache Google à cette
+        // identité pour conserver le même identifiant de joueur.
+        if (utilisateur?.is_anonymous) {
+            const { error } = await clientSupabase.auth.linkIdentity({
+                provider: "google",
+                options: { redirectTo: adresseRetour }
+            });
+
+            if (error) throw error;
+            return;
+        }
+
+        // Sinon, on ouvre une connexion Google normale.
+        const { error } = await clientSupabase.auth.signInWithOAuth({
+            provider: "google",
+            options: { redirectTo: adresseRetour }
+        });
+
+        if (error) throw error;
+
+    } catch (error) {
+        console.error("Erreur de connexion Google :", error);
+        afficherMessageCompte("Connexion Google impossible : " + error.message);
+    }
+}
+
+
+
+// ============================================
 // SAUVEGARDER LA PARTIE
 // ============================================
 
@@ -266,8 +457,7 @@ async function creerPartie() {
         if (!pseudo || !pseudo.trim()) return;
 
         afficherStatut("Création de la partie...");
-
-        const { data, error } = await clientSupabase.rpc(
+                const { data, error } = await clientSupabase.rpc(
             "create_game",
             { p_display_name: pseudo.trim() }
         );
@@ -495,8 +685,7 @@ async function actualiserSouris() {
             }
         }
     }
-
-    // Réinitialiser une ancienne demande expirée
+        // Réinitialiser une ancienne demande expirée
     if (
         demandeEnCours !== null &&
         Date.now() - demandeEnCours > 30000
@@ -726,7 +915,11 @@ if (window.marqueurChatRadar) {
     }
 
     if (roleActuel === "cat") {
-        actualiserSouris();
+        actualisation = setInterval(() => {
+            actualiserSouris();
+        }, 3000);
+    }
+            actualiserSouris();
         actualisation = setInterval(actualiserSouris, 3000);
    } else {
     verifierDemandeCapture();
@@ -956,7 +1149,7 @@ async function quitterPartie() {
         console.error("Erreur pour quitter :", error);
         alert("Impossible de quitter la partie : " + error.message);
     }
-}
+    }
 async function utiliserBonus(typeBonus) {
     if (!codeActuel || roleActuel !== "mouse") {
         alert("Seules les souris peuvent utiliser un bonus.");
@@ -993,6 +1186,7 @@ async function utiliserBonus(typeBonus) {
 // ============================================
 
 window.addEventListener("load", retrouverPartie);
+window.addEventListener("load", afficherEtatCompte);
 
 console.log("🐱 Le jeu du chat est chargé !");
 function recentrerCarte() {
