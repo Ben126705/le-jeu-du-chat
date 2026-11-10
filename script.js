@@ -482,9 +482,9 @@ async function creerPartie() {
     try {
         await connecterJoueur();
 
-        const pseudo = prompt("Quel est ton pseudo ?");
+        const pseudo = await obtenirPseudoJoueur();
 
-        if (!pseudo || !pseudo.trim()) return;
+if (!pseudo) return;
 
         afficherStatut("Création de la partie...");
                 const { data, error } = await clientSupabase.rpc(
