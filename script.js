@@ -478,6 +478,35 @@ if (!pseudo) return;
 
     return pseudo.trim();
 }
+async function seDeconnecter() {
+    try {
+        afficherMessageCompte("Déconnexion en cours...");
+        arreterGPS();
+localStorage.removeItem(CLE_PARTIE);
+
+        const { error } = await clientSupabase.auth.signOut();
+        if (error) throw error;
+
+        // Reconnexion anonyme
+        const resultat = await clientSupabase.auth.signInAnonymously();
+        if (resultat.error) throw resultat.error;
+
+        // Réinitialiser le panneau du compte
+        afficherMessageCompte("🐭 Tu joues maintenant sans compte.");
+
+        // Fermer le panneau du compte
+        document.getElementById("comptePanel").style.display = "none";
+        document.getElementById("boutonMonCompte").style.display = "inline-block";
+
+        localStorage.setItem("jeuDuChatSansCompte", "oui");
+
+        alert("Tu es maintenant déconnecté et tu joues anonymement !");
+
+    } catch (error) {
+        console.error(error);
+        afficherMessageCompte("Erreur de déconnexion : " + error.message);
+    }
+}
 async function creerPartie() {
     try {
         await connecterJoueur();
