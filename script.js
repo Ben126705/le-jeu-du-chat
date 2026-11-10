@@ -450,7 +450,34 @@ function creerPersonnage(direction) {
 // ============================================
 // CRÉER UNE PARTIE
 // ============================================
+async function obtenirPseudoJoueur() {
+    const { data, error } = await clientSupabase.auth.getUser();
+    if (error) throw error;
 
+    const utilisateur = data.user;
+
+    // Si le joueur possède un compte
+    if (utilisateur && !utilisateur.is_anonymous) {
+        const infos = utilisateur.user_metadata || {};
+
+        const pseudo =
+            infos.display_name ||
+            infos.full_name ||
+            infos.name ||
+            infos.user_name ||
+            infos.preferred_username ||
+            (utilisateur.email ? utilisateur.email.split("@")[0] : "");
+
+        if (pseudo) return pseudo.trim();
+    }
+
+    // Sinon, demander un pseudo
+    const pseudo = await obtenirPseudoJoueur();
+if (!pseudo) return;
+    if (!pseudo || !pseudo.trim()) return null;
+
+    return pseudo.trim();
+}
 async function creerPartie() {
     try {
         await connecterJoueur();
@@ -495,7 +522,8 @@ async function rejoindrePartie() {
     try {
         await connecterJoueur();
 
-        const pseudo = prompt("Quel est ton pseudo ?");
+        const pseudo = await obtenirPseudoJoueur();
+if (!pseudo) return;
 
         if (!pseudo || !pseudo.trim()) return;
 
