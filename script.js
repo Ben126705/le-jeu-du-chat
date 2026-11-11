@@ -1398,3 +1398,59 @@ document.addEventListener("fullscreenchange", () => {
         carte.invalidateSize();
     }, 300);
 });
+async function chargerClassementTempsSouris() {
+    const conteneur = document.getElementById("classementTempsSouris");
+
+    if (!conteneur || !codeActuel) return;
+
+    try {
+        const { data, error } = await clientSupabase
+            .from("mouse_time")
+            .select(`
+                player_id,
+                total_seconds,
+                mouse_since,
+                players!inner(display_name, active)
+            `)
+            .eq("room_id", await obtenirIdentifiantPartie())
+            .eq("players.active", true);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            conteneur.innerHTML = "<p>Aucun joueur pour le moment.</p>";
+            return;
+        }
+
+        data.sort((a, b) => b.total_seconds - a.total_seconds);
+
+        conteneur.innerHTML = data.map((joueur, index) => {
+            let secondes = Number(joueur.total_seconds);
+
+            if (joueur.mouse_since) {
+                secondes += Math.floor(
+                    (Date.now() - new Date(joueur.mouse_since).getTime()) / 1000
+                );
+            }
+
+            const heures = Math.floor(secondes / 3600);
+            const minutes = Math.floor((secondes % 3600) / 60);
+            const reste = secondes % 60;
+
+            const temps = heures > 0
+                ? `${heures} h ${minutes} min`
+                : `${minutes} min ${reste} s`;
+
+            return `
+                <p>
+                    ${index + 1}. 🐭 <strong>${echapperHTML(joueur.players.display_name)}</strong>
+                    — ${temps}
+                </p>
+            `;
+        }).join("");
+
+    } catch (error) {
+        console.error("Erreur classement souris :", error);
+        conteneur.innerHTML = "<p>Impossible de charger le classement.</p>";
+    }
+}
