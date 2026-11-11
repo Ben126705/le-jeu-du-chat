@@ -34,6 +34,7 @@ let demandeEnCours = null;
 let demandeAfficheeId = null;
 let traitementDemande = false;
 let sourisProcheId = null;
+let actualisationTempsSouris = null;
 
 const CLE_PARTIE = "jeuDuChat_partie";
 const DISTANCE_CAPTURE = 8;
@@ -961,6 +962,16 @@ function reglerActualisations() {
         chargerMessagesChat();
         actualisationChat = setInterval(chargerMessagesChat, 2000);
     }
+    // 🏆 Actualisation du classement du temps en souris
+if (actualisationTempsSouris !== null) {
+    clearInterval(actualisationTempsSouris);
+    actualisationTempsSouris = null;
+}
+
+if (codeActuel) {
+    chargerClassementTempsSouris();
+    actualisationTempsSouris = setInterval(chargerClassementTempsSouris, 3000);
+}
     if (actualisation !== null) {
         clearInterval(actualisation);
         actualisation = null;
