@@ -1404,6 +1404,16 @@ async function chargerClassementTempsSouris() {
     if (!conteneur || !codeActuel) return;
 
     try {
+        // Retrouver l'identifiant de la partie
+        const { data: salle, error: erreurSalle } = await clientSupabase
+            .from("rooms")
+            .select("id")
+            .eq("code", codeActuel)
+            .single();
+
+        if (erreurSalle) throw erreurSalle;
+
+        // Récupérer les temps de tous les joueurs actifs
         const { data, error } = await clientSupabase
             .from("mouse_time")
             .select(`
@@ -1412,45 +1422,55 @@ async function chargerClassementTempsSouris() {
                 mouse_since,
                 players!inner(display_name, active)
             `)
-            .eq("room_id", await obtenirIdentifiantPartie())
+            .eq("room_id", salle.id)
             .eq("players.active", true);
 
         if (error) throw error;
 
         if (!data || data.length === 0) {
-            conteneur.innerHTML = "<p>Aucun joueur pour le moment.</p>";
+            conteneur.textContent = "Aucun joueur pour le moment.";
             return;
         }
 
-        data.sort((a, b) => b.total_seconds - a.total_seconds);
+        const classement = data.map(joueur => {
+            const infos = Array.isArray(joueur.players)
+                ? joueur.players[0]
+                : joueur.players;
 
-        conteneur.innerHTML = data.map((joueur, index) => {
             let secondes = Number(joueur.total_seconds);
 
             if (joueur.mouse_since) {
-                secondes += Math.floor(
+                secondes += Math.max(0, Math.floor(
                     (Date.now() - new Date(joueur.mouse_since).getTime()) / 1000
-                );
+                ));
             }
 
-            const heures = Math.floor(secondes / 3600);
-            const minutes = Math.floor((secondes % 3600) / 60);
-            const reste = secondes % 60;
+            return {
+                pseudo: infos.display_name,
+                secondes
+            };
+        }).sort((a, b) => b.secondes - a.secondes);
+
+        conteneur.replaceChildren();
+
+        classement.forEach((joueur, index) => {
+            const heures = Math.floor(joueur.secondes / 3600);
+            const minutes = Math.floor((joueur.secondes % 3600) / 60);
+            const secondes = joueur.secondes % 60;
 
             const temps = heures > 0
                 ? `${heures} h ${minutes} min`
-                : `${minutes} min ${reste} s`;
+                : `${minutes} min ${secondes} s`;
 
-            return `
-                <p>
-                    ${index + 1}. 🐭 <strong>${echapperHTML(joueur.players.display_name)}</strong>
-                    — ${temps}
-                </p>
-            `;
-        }).join("");
+            const ligne = document.createElement("p");
+            ligne.textContent =
+                `${index + 1}. 🐭 ${joueur.pseudo} — ${temps}`;
+
+            conteneur.appendChild(ligne);
+        });
 
     } catch (error) {
         console.error("Erreur classement souris :", error);
-        conteneur.innerHTML = "<p>Impossible de charger le classement.</p>";
+        conteneur.textContent = "Impossible de charger le classement.";
     }
 }
