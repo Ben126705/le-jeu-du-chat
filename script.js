@@ -583,11 +583,14 @@ afficherCode();
 afficherMonRole();
 demarrerGPS();
 
-afficherStatut("🎉 Partie créée avec succès !");
-
 setTimeout(() => {
-    location.reload();
-}, 2000);
+    afficherStatut("🎉 Partie créée avec succès !");
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 2000);
+
+}, 1000);
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
