@@ -1415,27 +1415,10 @@ async function chargerClassementTempsSouris() {
     if (!conteneur || !codeActuel) return;
 
     try {
-       // Retrouver l'identifiant de la salle grâce au joueur actuel
-const { data: joueurActuel, error: erreurJoueur } = await clientSupabase
-    .from("players")
-    .select("room_id")
-    .eq("id", identifiantJoueur)
-    .single();
-
-if (erreurJoueur) throw erreurJoueur;
-
-const salleId = joueurActuel.room_id;
-        // Récupérer les temps de tous les joueurs actifs
-        const { data, error } = await clientSupabase
-            .from("mouse_time")
-            .select(`
-                player_id,
-                total_seconds,
-                mouse_since,
-                players!inner(display_name, active)
-            `)
-            .eq("room_id", salleId)
-            .eq("players.active", true);
+        const { data, error } = await clientSupabase.rpc(
+            "get_mouse_time_ranking",
+            { p_code: codeActuel }
+        );
 
         if (error) throw error;
 
@@ -1445,10 +1428,6 @@ const salleId = joueurActuel.room_id;
         }
 
         const classement = data.map(joueur => {
-            const infos = Array.isArray(joueur.players)
-                ? joueur.players[0]
-                : joueur.players;
-
             let secondes = Number(joueur.total_seconds);
 
             if (joueur.mouse_since) {
@@ -1458,7 +1437,7 @@ const salleId = joueurActuel.room_id;
             }
 
             return {
-                pseudo: infos.display_name,
+                pseudo: joueur.display_name,
                 secondes
             };
         }).sort((a, b) => b.secondes - a.secondes);
