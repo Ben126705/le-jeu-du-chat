@@ -533,12 +533,7 @@ afficherCode();
 afficherMonRole();
 demarrerGPS();
 
-const statut = document.getElementById("statut");
-statut.textContent = "🎉 Partie créée avec succès !";
-
-setTimeout(() => {
-    window.location.reload();
-}, 3000);
+alert("🎉 PARTIE CRÉÉE !");
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
