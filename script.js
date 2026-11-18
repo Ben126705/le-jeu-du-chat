@@ -528,12 +528,17 @@ if (!pseudo) return;
         roleActuel = partie.player_role;
         identifiantJoueur = partie.player_id;
         pseudoActuel = pseudo.trim();
+sauvegarderPartie();
+afficherCode();
+afficherMonRole();
+demarrerGPS();
 
-        sauvegarderPartie();
-        afficherCode();
-        afficherMonRole();
-        demarrerGPS();
+const statut = document.getElementById("statut");
+statut.textContent = "🎉 Partie créée avec succès !";
 
+setTimeout(() => {
+    window.location.reload();
+}, 3000);
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
