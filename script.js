@@ -533,8 +533,15 @@ sauvegarderPartie();
 afficherCode();
 afficherMonRole();
 demarrerGPS();
+demarrerGPS();
 
-alert("🎉 PARTIE CRÉÉE !");
+const statut = document.getElementById("statut");
+statut.textContent = "🎉 Partie créée avec succès !";
+
+setTimeout(() => {
+    console.log("ACTUALISATION EN COURS !");
+    window.location.reload();
+}, 3000);
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
