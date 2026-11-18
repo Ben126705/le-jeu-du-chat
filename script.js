@@ -579,10 +579,15 @@ if (!pseudo) return;
         pseudoActuel = pseudo.trim();
 
         sauvegarderPartie();
-        afficherCode();
-        afficherMonRole();
-        demarrerGPS();
+afficherCode();
+afficherMonRole();
+demarrerGPS();
 
+afficherStatut("🎉 Partie créée avec succès !");
+
+setTimeout(() => {
+    location.reload();
+}, 2000);
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
