@@ -89,6 +89,23 @@
 
         #comptePanel h2 {
             margin-top: 0;
+            #notification {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #237a3b;
+    color: white;
+    padding: 22px 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.35);
+    z-index: 99999;
+    font-size: 20px;
+    font-weight: bold;
+    width: 85%;
+    max-width: 400px;
+}
         }
 
         #messageCompte {
@@ -485,4 +502,7 @@
 </script>
 
 </body>
+ <div id="notification">
+    🎉 Partie créée avec succès !
+</div>   
 </html>
