@@ -533,10 +533,15 @@ sauvegarderPartie();
 afficherCode();
 afficherMonRole();
 demarrerGPS();
-
+        
 setTimeout(() => {
     afficherStatut("🎉 Partie créée avec succès !");
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
 }, 500);
+
     } catch (error) {
         console.error(error);
         afficherStatut("Erreur : " + error.message);
