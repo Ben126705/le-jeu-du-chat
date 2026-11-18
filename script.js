@@ -417,6 +417,7 @@ async function retrouverPartie() {
         afficherCode();
         afficherMonRole();
         demarrerGPS();
+        console.log("PARTIE CRÉÉE : le code est arrivé ici !");
 
     } catch (error) {
         console.error("Erreur de récupération :", error);
