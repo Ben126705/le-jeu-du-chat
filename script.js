@@ -1415,15 +1415,16 @@ async function chargerClassementTempsSouris() {
     if (!conteneur || !codeActuel) return;
 
     try {
-        // Retrouver l'identifiant de la partie
-        const { data: salle, error: erreurSalle } = await clientSupabase
-            .from("rooms")
-            .select("id")
-            .eq("code", codeActuel)
-            .single();
+       // Retrouver l'identifiant de la salle grâce au joueur actuel
+const { data: joueurActuel, error: erreurJoueur } = await clientSupabase
+    .from("players")
+    .select("room_id")
+    .eq("id", identifiantJoueur)
+    .single();
 
-        if (erreurSalle) throw erreurSalle;
+if (erreurJoueur) throw erreurJoueur;
 
+const salleId = joueurActuel.room_id;
         // Récupérer les temps de tous les joueurs actifs
         const { data, error } = await clientSupabase
             .from("mouse_time")
@@ -1433,7 +1434,7 @@ async function chargerClassementTempsSouris() {
                 mouse_since,
                 players!inner(display_name, active)
             `)
-            .eq("room_id", salle.id)
+            .eq("room_id", salleId)
             .eq("players.active", true);
 
         if (error) throw error;
