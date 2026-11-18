@@ -473,11 +473,9 @@ async function obtenirPseudoJoueur() {
     }
 
     // Sinon, demander un pseudo
-    const pseudo = await obtenirPseudoJoueur();
-if (!pseudo) return;
-    if (!pseudo || !pseudo.trim()) return null;
-
-    return pseudo.trim();
+    const pseudo = prompt("Quel est ton pseudo ?");
+if (!pseudo || !pseudo.trim()) return null;
+return pseudo.trim();
 }
 async function seDeconnecter() {
     try {
