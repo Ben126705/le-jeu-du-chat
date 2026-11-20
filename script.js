@@ -309,6 +309,7 @@ async function connecterAvecEmail() {
         if (error) throw error;
 
         afficherMessageCompte("✅ Tu es connecté à ton compte !");
+        await verifierAdmin();
         afficherStatut("Compte connecté. Tu peux créer ou rejoindre une partie.");
 
     } catch (error) {
@@ -1483,3 +1484,25 @@ function afficherNotification(message) {
         notification.style.display = "none";
     }, 3000);
 }
+async function verifierAdmin() {
+    try {
+        const { data, error } = await clientSupabase.rpc("est_admin");
+
+        if (error) throw error;
+
+        if (data === true) {
+            document.getElementById("boutonAdmin").style.display = "inline-block";
+        } else {
+            document.getElementById("boutonAdmin").style.display = "none";
+        }
+
+    } catch (error) {
+        console.error("Erreur vérification admin :", error);
+    }
+}
+// Vérifier les droits administrateur au démarrage
+clientSupabase.auth.getSession().then(({ data, error }) => {
+    if (!error && data.session) {
+        verifierAdmin();
+    }
+});
