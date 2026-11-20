@@ -534,13 +534,7 @@ afficherCode();
 afficherMonRole();
 demarrerGPS();
         
-setTimeout(() => {
-    afficherStatut("🎉 Partie créée avec succès !");
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}, 500);
+afficherNotification("🎉 Partie créée avec succès !");
 
     } catch (error) {
         console.error(error);
@@ -1478,4 +1472,14 @@ async function chargerClassementTempsSouris() {
         console.error("Erreur classement souris :", error);
         conteneur.textContent = "Impossible de charger le classement.";
     }
+}
+function afficherNotification(message) {
+    const notification = document.getElementById("notification");
+
+    notification.textContent = message;
+    notification.style.display = "block";
+
+    setTimeout(() => {
+        notification.style.display = "none";
+    }, 3000);
 }
