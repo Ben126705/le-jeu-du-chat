@@ -89,23 +89,24 @@
 
         #comptePanel h2 {
             margin-top: 0;
-            #notification {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #237a3b;
-    color: white;
-    padding: 22px 30px;
-    border-radius: 15px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.35);
-    z-index: 99999;
-    font-size: 20px;
-    font-weight: bold;
-    width: 85%;
-    max-width: 400px;
-}
+        }
+
+        #notification {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #237a3b;
+            color: white;
+            padding: 22px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.35);
+            z-index: 99999;
+            font-size: 20px;
+            font-weight: bold;
+            width: 85%;
+            max-width: 400px;
         }
 
         #messageCompte {
@@ -294,6 +295,10 @@
 
 <body>
 
+<div id="notification">
+    🎉 Partie créée avec succès !
+</div>
+
 <header>
     <h1>🐱 Le jeu du chat</h1>
     <p>Le chat chasse, les souris s'échappent !</p>
@@ -308,18 +313,18 @@
         <p id="codePartie"></p>
     </div>
 
-<button
-    id="boutonMonCompte"
-    type="button"
-    style="display:none;"
-    onclick="
-        document.getElementById('comptePanel').style.display = 'block';
-        document.getElementById('boutonMonCompte').style.display = 'none';
-    "
->
-    👤 Mon compte
-</button>
-    
+    <button
+        id="boutonMonCompte"
+        type="button"
+        style="display:none;"
+        onclick="
+            document.getElementById('comptePanel').style.display = 'block';
+            document.getElementById('boutonMonCompte').style.display = 'none';
+        "
+    >
+        👤 Mon compte
+    </button>
+
     <!-- COMPTE UTILISATEUR -->
     <div id="comptePanel">
         <h2>👤 Mon compte</h2>
@@ -357,19 +362,19 @@
         </button>
 
         <button type="button" onclick="seDeconnecter()">
-        🚪 Se déconnecter
-         </button>
-        
+            🚪 Se déconnecter
+        </button>
+
         <button
-    type="button"
-    onclick="
-        localStorage.setItem('jeuDuChatSansCompte', 'oui');
-        document.getElementById('comptePanel').style.display = 'none';
-        document.getElementById('boutonMonCompte').style.display = 'inline-block';
-    "
->
-    🎮 Continuer sans compte
-</button>
+            type="button"
+            onclick="
+                localStorage.setItem('jeuDuChatSansCompte', 'oui');
+                document.getElementById('comptePanel').style.display = 'none';
+                document.getElementById('boutonMonCompte').style.display = 'inline-block';
+            "
+        >
+            🎮 Continuer sans compte
+        </button>
 
         <p id="messageCompte">
             🐭 Tu peux aussi jouer sans compte !
@@ -400,21 +405,23 @@
 
         </div>
     </div>
-    <!-- CLASSEMENT DU TEMPS EN SOURIS -->
-<div id="tempsSourisPanel" style="
-    background: white;
-    border: 2px solid #237a3b;
-    border-radius: 12px;
-    max-width: 600px;
-    margin: 15px auto;
-    padding: 18px;
-">
-    <h2>🏆 Temps passé en souris</h2>
 
-    <div id="classementTempsSouris">
-        <p>⏱️ Chargement du classement...</p>
+    <!-- CLASSEMENT DU TEMPS EN SOURIS -->
+    <div id="tempsSourisPanel" style="
+        background: white;
+        border: 2px solid #237a3b;
+        border-radius: 12px;
+        max-width: 600px;
+        margin: 15px auto;
+        padding: 18px;
+    ">
+        <h2>🏆 Temps passé en souris</h2>
+
+        <div id="classementTempsSouris">
+            <p>⏱️ Chargement du classement...</p>
+        </div>
     </div>
-</div>
+
     <!-- CHAT DE LA PARTIE -->
     <div id="chatPanel" style="
         background: white;
@@ -457,6 +464,7 @@
             📩 Envoyer
         </button>
     </div>
+
     <!-- CAPTURE -->
     <div id="capturePanel">
         <h2 id="captureTitre">🐱 Capture</h2>
@@ -494,7 +502,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="script.js"></script>
-    <script>
+
+<script>
     if (localStorage.getItem('jeuDuChatSansCompte') === 'oui') {
         document.getElementById('comptePanel').style.display = 'none';
         document.getElementById('boutonMonCompte').style.display = 'inline-block';
@@ -502,7 +511,4 @@
 </script>
 
 </body>
- <div id="notification">
-    🎉 Partie créée avec succès !
-</div>   
 </html>
